@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Order Document</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #eef1f6; color: #000; margin: 0; padding: 40px; }
+        .document-container { max-width: 1000px; margin: auto; background: #fff; padding: 40px 50px; box-shadow: 0 20px 32px -12px rgba(30,41,59,0.16); border: 1px solid #e6eaf2; border-radius: 16px; }
+        
+        .doc-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1e293b; padding-bottom: 20px; margin-bottom: 30px;}
+        .brand-logo { height: 50px; object-fit: contain; } 
+        .doc-title { text-align: right; }
+        .doc-title h1 { margin: 0 0 5px 0; font-size: 28px; text-transform: uppercase; color: #0f172a;}
+        .doc-title p { margin: 0; font-size: 14px; color: #64748b; font-weight: 600;}
+
+        .info-section { margin-bottom: 30px; }
+        .section-title { background: #f8fafc; padding: 8px 12px; font-weight: 700; font-size: 14px; text-transform: uppercase; border-left: 4px solid #2563eb; margin-bottom: 15px; color: #0f172a;}
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .data-row { display: flex; font-size: 13px; line-height: 1.6; margin-bottom: 4px;}
+        .data-label { width: 140px; font-weight: 600; color: #475569; flex-shrink: 0;}
+        .data-value { flex: 1; font-weight: 500; color: #0f172a;}
+
+        /* Table Base Styles */
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+        th, td { border: 1px solid #cbd5e1; padding: 8px 8px; text-align: left; word-break: break-word;}
+        th { background-color: #f1f5f9; font-weight: 700; color: #475569; }
+
+        .print-actions { max-width: 1000px; margin: 0 auto 20px auto; display: flex; justify-content: space-between; }
+        .btn { padding: 11px 22px; font-weight: 600; border: none; border-radius: 8px; cursor: pointer; text-decoration: none; font-size: 14px; transition: all 0.2s cubic-bezier(0.4,0,0.2,1); display: inline-flex; align-items: center; gap: 6px;}
+        .btn-print { background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%); color: white; box-shadow: 0 8px 20px -4px rgba(37,99,235,0.28);}
+        .btn-print:hover { transform: translateY(-2px); box-shadow: 0 12px 24px -6px rgba(37,99,235,0.4); }
+        .btn-back { background: #eef1f6; color: #0f172a; border: 1px solid #e6eaf2; }
+        .btn-back:hover { background: #e2e8f0; }
+
+        .hidden { display: none !important; }
+
+        /* Print-Specific Styles to prevent cutoff */
+        @media print {
+            @page { size: landscape; margin: 10mm; } 
+            body { background: white; padding: 0; }
+            .document-container { box-shadow: none; border: none; padding: 0; max-width: 100%; width: 100%; border-radius: 0; }
+            .print-actions { display: none !important; }
+            
+            /* Force tables to show entirely without scrolling */
+            .table-wrapper { overflow: visible !important; }
+            table { width: 100% !important; font-size: 11px; } 
+            th, td { padding: 4px 6px !important; } 
+        }
+    </style>
+</head>
+<body>
+
+<div class="print-actions">
+    <button class="btn btn-back" onclick="window.close()">← Close Tab & Return</button>
+    <button class="btn btn-print" onclick="window.print()">🖨️ Print / Save as PDF</button>
+</div>
+
+<div class="document-container">
+    <div class="doc-header">
+        <img src="Prostarm-logo.png" alt="Prostarm CRM" class="brand-logo" onerror="this.outerHTML='<div style=\'font-size:24px; font-weight:bold; color:#2563eb;\'>PROSTARM</div>';">
+        <div class="doc-title">
+            <h1>Sales Order</h1>
+            <p>ID: <span id="p-uid">Loading...</span></p>
+        </div>
+    </div>
+
+    <!-- 1. Client Information -->
+    <div class="info-section">
+        <div class="section-title">Client Information</div>
+        <div class="grid-2">
+            <div>
+                <div class="data-row"><div class="data-label">Customer Name:</div><div class="data-value" id="p-customer"></div></div>
+                <div class="data-row"><div class="data-label">Contact Person:</div><div class="data-value" id="p-contact"></div></div>
+                <div class="data-row"><div class="data-label">Contact Phone:</div><div class="data-value" id="p-phone"></div></div>
+                <div class="data-row"><div class="data-label">Email:</div><div class="data-value" id="p-email"></div></div>
+            </div>
+            <div>
+                <div class="data-row"><div class="data-label">Bill To GST:</div><div class="data-value" id="p-billToGst"></div></div>
+                <div class="data-row"><div class="data-label">Ship To GST:</div><div class="data-value" id="p-shipToGst"></div></div>
+                <div class="data-row"><div class="data-label">Order Type:</div><div class="data-value" id="p-type"></div></div>
+                <div class="data-row"><div class="data-label">Sales Rep:</div><div class="data-value" id="p-rep"></div></div>
+                <div class="data-row"><div class="data-label">Current Status:</div><div class="data-value" id="p-status"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Commercials & Scope -->
+    <div class="info-section">
+        <div class="section-title">Commercials & Scope</div>
+        <div class="grid-2" style="margin-bottom: 10px;">
+            <div class="data-row"><div class="data-label">Installation Scope:</div><div class="data-value" id="p-scope"></div></div>
+            
+            <div style="display: flex; flex-direction: column;">
+                <div class="data-row"><div class="data-label">Buyback (Y/N):</div><div class="data-value" id="p-buyback"></div></div>
+                
+                <!-- Dynamic Buyback Details -->
+                <div id="buyback-details-section" class="hidden" style="margin-top: 6px; padding: 10px; background-color: #f8fafc; border-radius: 6px; border: 1px dashed #cbd5e1;">
+                    <div class="data-row"><div class="data-label" style="color:#2563eb;">Buyback Amount:</div><div class="data-value" id="p-buybackAmount" style="color:#2563eb; font-weight:600;"></div></div>
+                    <div class="data-row"><div class="data-label">Buyback Config:</div><div class="data-value" id="p-buybackConfig"></div></div>
+                    <div class="data-row"><div class="data-label">Buyback Bill?:</div><div class="data-value" id="p-buybackBill"></div></div>
+                </div>
+            </div>
+        </div>
+        <div class="data-row"><div class="data-label">PO Amount:</div><div class="data-value" style="font-weight:700; color:#2563eb;" id="p-amount"></div></div>
+    </div>
+
+    <!-- 3. Logistics & Dispatch -->
+    <div class="info-section">
+        <div class="section-title">Logistics & Dispatch</div>
+        <div class="grid-2">
+            <div>
+                <div class="data-row"><div class="data-label">Dispatch Type:</div><div class="data-value" id="p-dispatch"></div></div>
+                <div class="data-row"><div class="data-label">Pickup Loc:</div><div class="data-value" id="p-pickup"></div></div>
+                <div class="data-row"><div class="data-label">General Loc:</div><div class="data-value" id="p-location"></div></div>
+                <div class="data-row"><div class="data-label">Pin Code:</div><div class="data-value" id="p-pin"></div></div>
+            </div>
+            <div>
+                <div class="data-row"><div class="data-label">Billing Address:</div><div class="data-value" id="p-billing"></div></div>
+                <div class="data-row"><div class="data-label">Delivery Address:</div><div class="data-value" id="p-delivery"></div></div>
+                <div class="data-row"><div class="data-label">Install Address:</div><div class="data-value" id="p-installAdd"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Product Line Items -->
+    <div class="info-section">
+        <div class="section-title">Product Line Items</div>
+        <div class="table-wrapper">
+            <table id="p-productTable">
+                <thead>
+                    <tr>
+                        <th style="width: 15%">Product name</th>
+                        <th style="width: 10%">Capacity</th>
+                        <th style="width: 10%">Model</th>
+                        <th style="width: 10%">Make</th>
+                        <th style="width: 6%">Wty(M)</th>
+                        <th style="width: 8%">Clause</th>
+                        <th style="width: 6%">QTY</th>
+                        <th style="width: 8%">Rate</th>
+                        <th style="width: 7%">GST%</th>
+                        <th style="width: 10%">PO Amt</th>
+                        <th style="width: 10%">Total Amt</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 5. Documents Line Items -->
+    <div class="info-section">
+        <div class="section-title">Documents Line Items</div>
+        <div class="table-wrapper">
+            <table id="p-docTable">
+                <thead>
+                    <tr>
+                        <th>Document ID</th>
+                        <th>Document Name</th>
+                        <th>Attachment Present</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 6. Fulfillment & Tracking -->
+    <div class="info-section">
+        <div class="section-title">Fulfillment & Tracking</div>
+        <div class="grid-2">
+            <div>
+                <div class="data-row"><div class="data-label">Broad Status:</div><div class="data-value" id="p-broadStatus"></div></div>
+                <div class="data-row"><div class="data-label">Work Status:</div><div class="data-value" id="p-workStatus"></div></div>
+                <div class="data-row"><div class="data-label">Delivery Date:</div><div class="data-value" id="p-deliveryDate"></div></div>
+                <div class="data-row"><div class="data-label">Installation Date:</div><div class="data-value" id="p-installationDate"></div></div>
+                <div class="data-row" style="margin-top: 10px;"><div class="data-label">Bill Submission:</div><div class="data-value" id="p-billSubmissionStatus"></div></div>
+                <div class="data-row"><div class="data-label">Comp Certificate:</div><div class="data-value" id="p-compCertificate"></div></div>
+                <div class="data-row"><div class="data-label">ETA:</div><div class="data-value" id="p-eta"></div></div>
+                <div class="data-row"><div class="data-label">Serial Number:</div><div class="data-value" id="p-productSerialNumber"></div></div>
+            </div>
+            <div>
+                <div class="data-row"><div class="data-label">Invoice Number:</div><div class="data-value" id="p-invoiceNumber"></div></div>
+                <div class="data-row"><div class="data-label">Invoice Date:</div><div class="data-value" id="p-invoiceDate"></div></div>
+                <div class="data-row"><div class="data-label">Basic Amount:</div><div class="data-value" id="p-invoiceBasicAmount"></div></div>
+                <div class="data-row"><div class="data-label">Total Amount:</div><div class="data-value" id="p-invoiceAmount"></div></div>
+                <div class="data-row"><div class="data-label">Billing Done ?:</div><div class="data-value" id="p-billingDone"></div></div>
+                <div class="data-row" style="margin-top: 10px;"><div class="data-label">Engineer Name:</div><div class="data-value" id="p-engineerName"></div></div>
+                <div class="data-row"><div class="data-label">Material Received:</div><div class="data-value" id="p-materialReceivedDate"></div></div>
+                <div class="data-row"><div class="data-label">Ageing:</div><div class="data-value" id="p-ageing"></div></div>
+                <div class="data-row"><div class="data-label">TAT Days:</div><div class="data-value" id="p-tatDays"></div></div>
+            </div>
+        </div>
+        <div class="data-row" style="margin-top: 10px;"><div class="data-label" style="color:#2563eb;">Last Remark:</div><div class="data-value" id="p-lastFollowupRemark" style="color:#2563eb; font-weight:600;"></div></div>
+    </div>
+
+    <!-- 7. Followup / Remarks -->
+    <div class="info-section">
+        <div class="section-title">Followup / Remarks</div>
+        <div class="table-wrapper">
+            <table id="p-remarkTable">
+                <thead>
+                    <tr>
+                        <th style="width: 15%">Date</th>
+                        <th style="width: 25%">Remark By</th>
+                        <th style="width: 60%">Remark Details</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    window.onload = function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const index = urlParams.get('id');
+
+        if (index === null) {
+            alert("No order specified for printing.");
+            window.location.href = 'dashboard.html';
+            return;
+        }
+
+        const ordersData = JSON.parse(localStorage.getItem('crmOrders')) || [];
+        const targetOrder = ordersData[index];
+
+        if (!targetOrder) {
+            alert("Order not found in the database.");
+            window.location.href = 'dashboard.html';
+            return;
+        }
+
+        const order = targetOrder["Sales Order"];
+        const products = targetOrder["Products"] || [];
+        const childItems = targetOrder["SalesChildTable"] || [];
+        const remarks = targetOrder["RemarksTable"] || [];
+
+        const map = (id, val, prefix="") => {
+            const el = document.getElementById(id);
+            if(el) el.innerText = (val !== undefined && val !== "" && val !== null) ? prefix + val : "-";
+        };
+
+        map('p-uid', order["UID"]);
+        map('p-customer', order["Customer Name"]); map('p-contact', order["Contact Person"]);
+        map('p-phone', order["Contact Details"]); map('p-email', order["Email"]);
+        map('p-type', order["Order Type to mention"]);
+        map('p-rep', order["Sales Person Name"]); map('p-status', order["Status"]);
+        
+        map('p-amount', order["Price bifurcation / PO Amount"], "₹ ");
+        map('p-scope', order["Installation Scope"]); 
+        
+        const buybackStatus = order["Buyback Status"] || order["Buyback (Y/N)"];
+        map('p-buyback', buybackStatus);
+        
+        if (buybackStatus === "Yes") {
+            document.getElementById('buyback-details-section').classList.remove('hidden');
+            map('p-buybackConfig', order["Buyback Configuration"]); 
+            map('p-buybackAmount', order["Buyback Amount"], "₹ "); 
+            map('p-buybackBill', order["Buyback Bill ?"]);
+        }
+
+        map('p-dispatch', order["Dispatch Type"]); map('p-pickup', order["Pickup Location"]);
+        map('p-location', order["Location"]); map('p-pin', order["Pin code"]);
+        map('p-billing', order["Billing Address"]); map('p-delivery', order["Delivery Address"]);
+        map('p-installAdd', order["Installation Address"]);
+        
+        map('p-billToGst', order["Bill to GST Number"] || order["GST Number"]);
+        map('p-shipToGst', order["Ship to GST Number"]);
+        
+        map('p-broadStatus', order["Broad Status"]); map('p-workStatus', order["Work Status"]); map('p-deliveryDate', order["Delivery Date"]); map('p-installationDate', order["Installation Date"]);
+        map('p-invoiceNumber', order["Invoice Number"]); map('p-invoiceDate', order["Invoice Date"]); map('p-invoiceBasicAmount', order["Basic Amount"], "₹ "); map('p-invoiceAmount', order["Invoice Amount"], "₹ "); map('p-billingDone', order["Billing Done ?"]);
+        
+        map('p-billSubmissionStatus', order["Bill Submision Status"]); map('p-compCertificate', order["Comp Certificate"]); map('p-eta', order["ETA"]); map('p-productSerialNumber', order["Product Serial Number"]);
+        map('p-engineerName', order["Engineer Name"]); map('p-materialReceivedDate', order["Material Received Date"]); map('p-ageing', order["Ageing"]); map('p-tatDays', order["TAT Days"]);
+
+        let lastRemarkStr = "";
+        if (remarks.length > 0) {
+            let lastObj = remarks[remarks.length - 1];
+            lastRemarkStr = `[${lastObj["Date"] || '-'}] ${lastObj["Remark By"] || '-'}: ${lastObj["Remark"] || '-'}`;
+        }
+        map('p-lastFollowupRemark', lastRemarkStr);
+
+        const pTbody = document.querySelector('#p-productTable tbody');
+        let pHtml = '';
+        if (products.length === 0) {
+            pHtml = '<tr><td colspan="11" style="text-align:center;">No products added.</td></tr>';
+        } else {
+            products.forEach(p => {
+                if(!p) return;
+                pHtml += `<tr>
+                    <td>${p["Product Name"] || '-'}</td>
+                    <td>${p["Capacity"] || '-'}</td>
+                    <td>${p["Model"] || '-'}</td>
+                    <td>${p["Make"] || '-'}</td>
+                    <td>${p["Warranty (Months)"] || '-'}</td>
+                    <td>${p["Warranty Clause"] || '-'}</td>
+                    <td>${p["QTY"] || '-'}</td>
+                    <td>${p["Rate"] || '-'}</td>
+                    <td>${p["GST %"] || '0'}%</td>
+                    <td>${p["PO Amount"] || '-'}</td>
+                    <td>${p["Total Amount"] || '-'}</td>
+                </tr>`;
+            });
+        }
+        pTbody.innerHTML = pHtml;
+
+        const dTbody = document.querySelector('#p-docTable tbody');
+        let dHtml = '';
+        if (childItems.length === 0) {
+            dHtml = '<tr><td colspan="3" style="text-align:center;">No documents attached</td></tr>';
+        } else {
+            childItems.forEach(item => {
+                let hasAttach = "No";
+                if (item["Attachment"] && item["Attachment"].data) hasAttach = "Yes";
+                else if (typeof item["Attachment"] === 'string' && item["Attachment"] !== "None") hasAttach = "Yes";
+                
+                const docIdDisplay = item["Document ID"] || item["Product ID"] || '-';
+                
+                dHtml += `<tr><td>${docIdDisplay}</td><td>${item["Document Name"] || '-'}</td><td style="font-weight:600;">${hasAttach}</td></tr>`;
+            });
+        }
+        dTbody.innerHTML = dHtml;
+
+        const rTbody = document.querySelector('#p-remarkTable tbody');
+        let rHtml = '';
+        if (remarks.length === 0) {
+            rHtml = '<tr><td colspan="3" style="text-align:center;">No remarks added</td></tr>';
+        } else {
+            remarks.forEach(rem => {
+                if(!rem) return;
+                rHtml += `<tr><td>${rem["Date"] || '-'}</td><td>${rem["Remark By"] || '-'}</td><td>${rem["Remark"] || '-'}</td></tr>`;
+            });
+        }
+        rTbody.innerHTML = rHtml;
+    };
+</script>
+<script src="utils.js"></script>
+</body>
+</html>

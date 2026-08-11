@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Order Entry</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="global.css">
+    <style>
+        body { padding: 20px 20px 60px 20px; }
+        .container { max-width: 1200px; margin: auto; background: var(--card-bg); padding: 40px; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border); }
+        
+        h2 { color: var(--text-main); border-bottom: 2px solid var(--border); padding-bottom: 12px; margin-bottom: 24px; font-size: 25px; font-weight: 800;}
+        h3 { color: var(--primary); margin-top: 10px; margin-bottom: 16px; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+        
+        /* Tabs */
+        .tabs { display: flex; gap: 4px; border-bottom: 2px solid var(--border); margin-bottom: 30px; overflow-x: auto; scrollbar-width: thin; }
+        .tab-btn { background: none; border: none; padding: 12px 22px; font-size: 14.5px; font-weight: 600; color: var(--text-muted); cursor: pointer; border-radius: var(--radius-sm) var(--radius-sm) 0 0; border-bottom: 3px solid transparent; transition: all 0.2s var(--ease); white-space: nowrap; }
+        .tab-btn:hover { color: var(--primary); background-color: #f8fafc; }
+        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); background-color: var(--primary-light); }
+        .tab-content { display: none; animation: fadeIn 0.3s var(--ease); }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Form Layout */
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 25px;}
+        .form-group { display: flex; flex-direction: column; }
+        .span-2 { grid-column: span 2; }
+        label { font-weight: 600; margin-bottom: 6px; font-size: 13px; color: var(--text-muted); }
+        
+        /* Inputs */
+        input, select, textarea { padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; box-sizing: border-box; width: 100%; font-family: inherit; transition: all 0.2s var(--ease); background: #fff; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
+        textarea { resize: vertical; }
+        input[readonly], textarea[readonly] { background-color: #f8fafc; color: var(--text-muted); cursor: not-allowed; font-weight: 600; }
+        .hidden { display: none !important; }
+        
+        /* Tables */
+        .table-responsive { overflow-x: auto; margin-top: 10px; padding-bottom: 8px; margin-bottom: 25px; box-shadow: none; border: none; background: none;}
+        table { min-width: 1000px; }
+        #productTable { min-width: 1300px; } 
+        th, td { padding: 12px 10px; font-size: 13px; border-bottom: 1px solid var(--border); text-align: left; }
+        th { background-color: #f1f5f9; font-weight: 600; color: var(--text-muted); text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;}
+        td input, td select { padding: 8px; font-size: 13px; }
+        
+        .td-id { width: 15%; }
+        .td-doc { width: 25%; }
+        .input-bare { background: #f8fafc; border: none; width: 100%; text-align: center; font-weight: 600; color: #475569; border-radius: 6px;}
+        .input-bare:focus { box-shadow: none; outline: none;}
+        
+        .btn-primary { margin-bottom: 10px; }
+        
+        /* Navigation & Submit Sections */
+        .submit-section { margin-top: 30px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 24px; }
+        .submit-section.right { justify-content: flex-end; }
+        
+        .btn-prev { background-color: #f1f5f9; color: var(--text-muted); font-size: 15px; padding: 12px 28px; border: 1px solid var(--border); border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .btn-prev:hover { background-color: #e2e8f0; color: var(--text-main); }
+
+        .custom-file-upload { display: flex; align-items: center; gap: 10px; }
+        .hidden-file-input { display: none !important; }
+        .custom-file-btn { background: #f8fafc; border: 1px solid var(--border-strong); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; color: #475569; transition: all 0.2s; white-space: nowrap; display: inline-block;}
+        .custom-file-btn:hover { background: #e2e8f0; color: #0f172a; border-color: #94a3b8; }
+        .file-name-display { font-size: 12px; color: #64748b; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    </style>
+</head>
+<body>
+
+<div class="master-nav">
+    <div class="brand-container">
+        <img src="Prostarm-logo.png" alt="Prostarm" onerror="this.outerHTML='<div style=\'font-weight:bold; color:#2563eb;\'>PR</div>';">
+        <h2 style="margin: 0; border: none; padding: 0; color: var(--primary);">Sales Order Entry</h2>
+    </div>
+    <div class="master-nav-actions">
+        <a href="dashboard.html" class="btn btn-back">← Back to Dashboard</a>
+    </div>
+</div>
+
+<div class="container">
+    <h2>Create / Update Sales Order</h2>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="openTab(event, 'tab-basic', this)">1. Basic Info</button>
+        <button class="tab-btn" onclick="openTab(event, 'tab-logistics', this)">2. Logistics</button>
+        <button class="tab-btn" onclick="openTab(event, 'tab-commercials', this)">3. Commercials</button>
+        <button class="tab-btn" onclick="openTab(event, 'tab-products', this)">4. Products & Tech</button>
+        <button class="tab-btn" onclick="openTab(event, 'tab-docs', this)">5. Documents</button>
+    </div>
+    
+    <!-- TAB 1: BASIC INFO -->
+    <div id="tab-basic" class="tab-content active">
+        <h3 style="color: #2563eb; text-transform: uppercase;">General Details</h3>
+        <div class="form-grid">
+            <div class="form-group"><label>UID (Auto)</label><input type="text" id="uid" readonly></div>
+            <div class="form-group">
+                <label>Sales Person Name</label>
+                <input type="text" id="salesPersonName" list="salesPersonList" placeholder="Select or enter Sales Person Name">
+                <datalist id="salesPersonList"></datalist>
+            </div>
+            <div class="form-group"><label>Customer Name</label><input type="text" id="customerName" placeholder="Enter Customer Name"></div>
+            <div class="form-group"><label>Location</label><input type="text" id="location" placeholder="City / Area"></div>
+            
+            <div class="form-group"><label>PO Number</label><input type="text" id="poNumber" placeholder="PO Number"></div>
+            <div class="form-group"><label>PO Date</label><input type="date" id="poDate"></div>
+            <div class="form-group"><label>Order Type</label>
+                <select id="orderType">
+                    <option value="" disabled selected>Select Type...</option>
+                    <option value="Dealer">Government</option>
+                    <option value="Retail">Private</option>
+                </select>
+            </div>
+            <div class="form-group"><label>Order Source</label>
+                <select id="orderSource">
+                    <option value="" disabled selected>Select Source...</option>
+                    <option value="BFSI (Direct)">BFSI (Direct)</option>
+                    <option value="BFSI (GeM)">BFSI (GeM)</option>
+                    <option value="BFSI (Tender)">BFSI (Tender)</option>
+                    <option value="Dealer & Channel Partner">Dealer & Channel Partner</option>
+                    <option value="End User/Corporate">End User/Corporate</option>
+                    <option value="OEM/Industrial">OEM/Industrial</option>
+                    <option value="System Integrator ( S.I )">System Integrator ( S.I )</option>
+                    <option value="Tender (GeM)">Tender (GeM)</option>
+                    <option value="Tender (Non GeM)">Tender (Non GeM)</option>
+                </select>
+            </div>
+            
+            <div class="form-group"><label>Segments</label>
+                <input type="text" id="segment" list="segmentList" placeholder="Select or type Segment...">
+                <datalist id="segmentList">
+                    <option value="Government">
+                    <option value="Banking">
+                    <option value="Enterprise">
+                    <option value="Healthcare">
+                </datalist>
+            </div>
+            
+            <div class="form-group"><label>Financial Year (FY)</label>
+                <input type="text" id="fy" placeholder="Auto-calculated" readonly class="input-bare" style="text-align: left; padding: 10px 14px; background-color: #f1f5f9 !important;">
+            </div>
+            
+            <div class="form-group"><label>ProstarM Branch</label>
+                <input type="text" id="prostarmBranch" list="branchList" placeholder="Select or type Branch...">
+                <datalist id="branchList">
+                    <option value="Mumbai">
+                    <option value="Delhi">
+                    <option value="Bangalore">
+                    <option value="Chennai">
+                    <option value="Kolkata">
+                </datalist>
+            </div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;">
+
+        <h3 style="color: #2563eb; text-transform: uppercase;">Contact Information</h3>
+        <div class="form-grid">
+            <div class="form-group"><label>Contact Person</label><input type="text" id="contactPerson" placeholder="Full Name"></div>
+            <div class="form-group"><label>Contact Details</label><input type="tel" id="contactDetails" placeholder="Mobile Number"></div>
+            <div class="form-group"><label>Email</label><input type="email" id="email" placeholder="Email Address"></div>
+        </div>
+
+        <div class="submit-section right">
+            <button class="btn btn-submit" type="button" onclick="nextTab('tab-logistics', 1)">Next Tab →</button>
+        </div>
+    </div>
+
+    <!-- TAB 2: LOGISTICS -->
+    <div id="tab-logistics" class="tab-content">
+        <h3 style="color: #2563eb; text-transform: uppercase;">Addresses & Dispatch</h3>
+        <div class="form-grid">
+            <div class="form-group span-2"><label>Billing Address</label><textarea id="billingAddress" rows="2" placeholder="Full Billing Address"></textarea></div>
+            <div class="form-group"><label>Bill to GST Number</label><input type="text" id="billToGst" placeholder="Enter Billing GSTIN"></div>
+            
+            <div class="form-group span-2"><label>Delivery Address</label><textarea id="deliveryAddress" rows="2" placeholder="Full Delivery Address"></textarea></div>
+            <div class="form-group"><label>Ship to GST Number</label><input type="text" id="shipToGst" placeholder="Enter Shipping GSTIN"></div>
+            
+            <div class="form-group span-2"><label>Installation Address</label><textarea id="installationAddress" rows="2" placeholder="Full Installation Address"></textarea></div>
+            <div class="form-group"><label>Pin code</label><input type="number" id="pinCode" placeholder="Postal Code"></div>
+            
+            <div class="form-group"><label>To be Completed On</label><input type="date" id="toBeCompletedOn"></div>
+            <div class="form-group"><label>Region / Zonal Office</label><input type="text" id="regionZoneOffice" placeholder="Region / Zone"></div>
+            
+            <div class="form-group">
+                <label>State</label>
+                <select id="state" onchange="updateZone()">
+                    <option value="" disabled selected>Select State...</option>
+                    <option value="Andhra Pradesh">Andhra Pradesh</option>
+                    <option value="Assam">Assam</option>
+                    <option value="Bihar">Bihar</option>
+                    <option value="Chandigarh">Chandigarh</option>
+                    <option value="Chhattisgarh">Chhattisgarh</option>
+                    <option value="Dadra and Nagar Haveli and Daman and Diu">Dadra and Nagar Haveli and Daman and Diu</option>
+                    <option value="Delhi">Delhi</option>
+                    <option value="Goa">Goa</option>
+                    <option value="Gujarat">Gujarat</option>
+                    <option value="Haryana">Haryana</option>
+                    <option value="Himachal Pradesh">Himachal Pradesh</option>
+                    <option value="Jammu And Kashmir">Jammu And Kashmir</option>
+                    <option value="Jharkhand">Jharkhand</option>
+                    <option value="Karnataka">Karnataka</option>
+                    <option value="Kerala">Kerala</option>
+                    <option value="Madhya Pradesh">Madhya Pradesh</option>
+                    <option value="Maharashtra">Maharashtra</option>
+                    <option value="Manipur">Manipur</option>
+                    <option value="Meghalaya">Meghalaya</option>
+                    <option value="Nagaland">Nagaland</option>
+                    <option value="Odisha">Odisha</option>
+                    <option value="Pondicherry">Pondicherry</option>
+                    <option value="Punjab">Punjab</option>
+                    <option value="Rajasthan">Rajasthan</option>
+                    <option value="Sikkim">Sikkim</option>
+                    <option value="Tamil Nadu">Tamil Nadu</option>
+                    <option value="Telangana">Telangana</option>
+                    <option value="Tripura">Tripura</option>
+                    <option value="Uttar Pradesh">Uttar Pradesh</option>
+                    <option value="Uttarakhand">Uttarakhand</option>
+                    <option value="West Bengal">West Bengal</option>
+                </select>
+            </div>
+            
+            <div class="form-group"><label>Zone</label><input type="text" id="zone" placeholder="Auto-fills from State" readonly style="background-color: #f1f5f9; cursor: not-allowed;"></div>
+
+            <div class="form-group"><label>Dispatch Type</label>
+                <select id="dispatchType" onchange="togglePickupLocation(this.value)">
+                    <option value="" disabled selected>Select Dispatch...</option>
+                    <option value="Delivery">Delivery</option>
+                    <option value="Self Pickup">Self Pickup</option>
+                </select>
+            </div>
+            <div class="form-group hidden" id="pickupLocationGroup"><label>Pickup Location</label><input type="text" id="pickupLocation" placeholder="Required for Self Pickup"></div>
+        </div>
+
+        <div class="submit-section">
+            <button class="btn-prev" type="button" onclick="prevTab('tab-basic', 1)">← Previous Tab</button>
+            <button class="btn btn-submit" type="button" onclick="nextTab('tab-commercials', 2)">Next Tab →</button>
+        </div>
+    </div>
+
+    <!-- TAB 3: COMMERCIALS -->
+    <div id="tab-commercials" class="tab-content">
+        <h3 style="color: #2563eb; text-transform: uppercase;">Commercials & Scope</h3>
+        
+        <div class="form-grid">
+            <div class="form-group"><label>Installation Scope</label>
+                <select id="installationScope">
+                    <option value="" disabled selected>Select Scope...</option>
+                    <option value="Required">Required</option>
+                    <option value="Not Required">Not Required</option>
+                </select>
+            </div>
+            <div class="form-group"><label>Retention / BG</label>
+                <select id="retentionBg">
+                    <option value="" disabled selected>Select Option...</option>
+                    <option value="Retention">Retention</option>
+                    <option value="BG">BG</option>
+                    <option value="Not Required">Not Required</option>
+                </select>
+            </div>
+            <div class="form-group"><label>% Of BG Retention</label><input type="number" id="bgRetentionPercent" placeholder="%" step="0.01"></div>
+        </div>
+            
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 5px 0 25px 0;">
+            
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Buyback Status</label>
+                <select id="buyback" onchange="toggleBuyback(this.value)">
+                    <option value="" disabled selected>Select Buyback...</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            </div>
+            <div class="form-group hidden" id="fg-buybackConfig"><label>Buyback Configuration</label><input type="text" id="buybackConfig" placeholder="Details..."></div>
+            <div class="form-group hidden" id="fg-buybackAmount"><label>Buyback Amount</label><input type="number" id="buybackAmount" placeholder="₹ 0.00" step="0.01"></div>
+            <div class="form-group hidden" id="fg-buybackBill"><label>Buyback Bill?</label>
+                <select id="buybackBill">
+                    <option value="" disabled selected>Select...</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            </div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 5px 0 25px 0;">
+
+        <div class="form-grid">
+            <div class="form-group span-2"><label>BOQ / Product details</label><textarea id="boqProductDetails" rows="2" placeholder="Enter high-level details or description..."></textarea></div>
+            <div class="form-group"><label>PO Amount (Auto calculated)</label><input type="number" id="poAmount" placeholder="₹ 0.00" step="0.01" readonly style="background-color: #f1f5f9; cursor: not-allowed;"></div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 5px 0 25px 0;">
+
+        <div class="form-grid">
+            <div class="form-group">
+                <label>AMC Mentioned In PO</label>
+                <select id="amcMentioned">
+                    <option value="" disabled selected>Select...</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>AMC Duration (Year)</label>
+                <input type="number" id="amcDuration" placeholder="e.g. 1" min="0" step="1">
+            </div>
+            <div class="form-group">
+                <label>PM Required during warranty</label>
+                <select id="pmRequired">
+                    <option value="" disabled selected>Select...</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Payments Terms</label>
+                <input type="text" id="paymentTerms" list="paymentTermsList" placeholder="Select or type Terms...">
+                <datalist id="paymentTermsList">
+                    <option value="100% Advance">
+                    <option value="50% Advance, 50% Against Delivery">
+                    <option value="30 Days Credit">
+                    <option value="On Delivery">
+                </datalist>
+            </div>
+            <div class="form-group">
+                <label>Payment Status</label>
+                <select id="paymentStatus">
+                    <option value="" disabled selected>Select...</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Partial">Partial</option>
+                    <option value="Paid">Paid</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="submit-section">
+            <button class="btn-prev" type="button" onclick="prevTab('tab-logistics', 2)">← Previous Tab</button>
+            <button class="btn btn-submit" type="button" onclick="nextTab('tab-products', 3)">Next Tab →</button>
+        </div>
+    </div>
+
+    <!-- TAB 4: PRODUCTS -->
+    <div id="tab-products" class="tab-content">
+        <h3 style="color: #2563eb; text-transform: uppercase;">Product Line Items</h3>
+        <div class="table-responsive">
+            <table id="productTable">
+                <thead>
+                    <tr style="background-color: #f1f5f9;">
+                        <th style="width: 15%">Product name</th>
+                        <th style="width: 10%">Capacity</th>
+                        <th style="width: 10%">Model</th>
+                        <th style="width: 10%">Make</th>
+                        <th style="width: 6%">Wty<br><small>(Mos)</small></th>
+                        <th style="width: 8%">Wty<br><small>Clause</small></th>
+                        <th style="width: 6%">QTY</th>
+                        <th style="width: 8%">Rate</th>
+                        <th style="width: 7%">GST %</th>
+                        <th style="background-color: #bfdbfe; width: 10%; color: #1e3a8a;">PO Amount<br><small>(Basic)</small></th>
+                        <th style="background-color: #bfdbfe; width: 10%; color: #1e3a8a;">Total Amount</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <button class="btn btn-primary" type="button" onclick="addProductRow()">+ Add Product</button>
+
+        <div class="submit-section">
+            <button class="btn-prev" type="button" onclick="prevTab('tab-commercials', 3)">← Previous Tab</button>
+            <button class="btn btn-submit" type="button" onclick="nextTab('tab-docs', 4)">Next Tab →</button>
+        </div>
+    </div>
+
+    <!-- TAB 5: DOCS -->
+    <div id="tab-docs" class="tab-content">
+        <h3 style="color: #2563eb; text-transform: uppercase;">Documents Line Items</h3>
+        <div class="table-responsive">
+            <table id="childTable">
+                <thead>
+                    <tr style="background-color: #f1f5f9;">
+                        <th class="td-id">Document ID</th>
+                        <th class="td-id">Parent UID</th>
+                        <th class="td-doc">Document Name</th>
+                        <th class="td-doc">Attachment</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <button class="btn btn-primary" type="button" onclick="addChildRow()">+ Add Document</button>
+
+        <!-- Final Submit -->
+        <div class="submit-section">
+            <button class="btn-prev" type="button" onclick="prevTab('tab-products', 4)">← Previous Tab</button>
+            <button class="btn btn-submit" type="button" onclick="submitForm()">Submit Full Order</button>
+        </div>
+    </div>
+</div>
+
+<!-- Add Shared Utility Script -->
+<script src="utils.js"></script>
+
+<script>
+    function updateZone() {
+        const stateSelect = document.getElementById("state");
+        const zoneInput = document.getElementById("zone");
+        const selectedState = stateSelect.value;
+        // Accessing stateZoneMap from utils.js
+        if (stateZoneMap && stateZoneMap[selectedState]) {
+            zoneInput.value = stateZoneMap[selectedState];
+        } else {
+            zoneInput.value = "";
+        }
+    }
+
+    function generateFY() {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = today.getMonth() + 1;
+        let fyString = "";
+        if (month >= 4) {
+            fyString = `${year}-${String(year + 1).slice(-2)}`;
+        } else {
+            fyString = `${year - 1}-${String(year).slice(-2)}`;
+        }
+        document.getElementById('fy').value = fyString;
+    }
+
+    function openTab(evt, tabId, btnElement = null) {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        if (btnElement) {
+            btnElement.classList.add('active');
+        } else {
+            const tabs = ['tab-basic', 'tab-logistics', 'tab-commercials', 'tab-products', 'tab-docs'];
+            const idx = tabs.indexOf(tabId);
+            if (idx !== -1) {
+                document.querySelectorAll('.tab-btn')[idx].classList.add('active');
+            }
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function nextTab(nextTabId, currentTabIndex) {
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        if (tabButtons[currentTabIndex]) {
+            openTab(null, nextTabId, tabButtons[currentTabIndex]);
+        }
+    }
+
+    function prevTab(prevTabId, currentTabIndex) {
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        if (tabButtons[currentTabIndex - 1]) {
+            openTab(null, prevTabId, tabButtons[currentTabIndex - 1]);
+        }
+    }
+
+    function updateFileName(input) {
+        const span = input.closest('.custom-file-upload').querySelector('.file-name-display');
+        if (input.files.length > 0) {
+            span.textContent = input.files[0].name;
+            span.style.color = '#2563eb'; span.style.fontWeight = '600';
+        } else {
+            span.textContent = "No file chosen";
+            span.style.color = '#64748b'; span.style.fontWeight = '400';
+        }
+    }
+
+    function togglePickupLocation(val) {
+        const group = document.getElementById('pickupLocationGroup');
+        if (val === 'Self Pickup') group.classList.remove('hidden');
+        else { group.classList.add('hidden'); document.getElementById('pickupLocation').value = ''; }
+    }
+
+    function toggleBuyback(val) {
+        const config = document.getElementById('fg-buybackConfig');
+        const amount = document.getElementById('fg-buybackAmount');
+        const bill = document.getElementById('fg-buybackBill');
+        if(val === 'Yes') {
+            config.classList.remove('hidden');
+            amount.classList.remove('hidden');
+            bill.classList.remove('hidden');
+        } else {
+            config.classList.add('hidden');
+            amount.classList.add('hidden');
+            bill.classList.add('hidden');
+            document.getElementById('buybackConfig').value = '';
+            document.getElementById('buybackAmount').value = '';
+            document.getElementById('buybackBill').value = '';
+        }
+    }
+
+    const getStrictInitials = (str) => {
+        if (!str) return "XX";
+        if (str.includes('@')) str = str.split('@')[0];
+        const parts = str.split('.');
+        if (parts.length >= 2) {
+            return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+        }
+        return str.substring(0, 2).toUpperCase();
+    };
+
+    function generateNextUID(lastKnownUID, baseString) {
+        const initials = getStrictInitials(baseString);
+        const today = new Date();
+        const prefix = initials + String(today.getFullYear()).slice(-2) + String(today.getMonth() + 1).padStart(2, '0');
+        if (lastKnownUID && lastKnownUID.startsWith(prefix)) {
+            return prefix + String(parseInt(lastKnownUID.slice(-4), 10) + 1).padStart(4, '0');
+        }
+        return prefix + "0001";
+    }
+
+    function generateAutoUID() {
+        const loginId = sessionStorage.getItem('loggedInEmail') || sessionStorage.getItem('loggedInUser') || "chandan.singh";
+        const uidInput = document.getElementById('uid');
+        const lastUID = localStorage.getItem('simulatedDBLastUID') || "CS26060014";
+        uidInput.value = generateNextUID(lastUID, loginId);
+        document.querySelectorAll('.child-parent-uid').forEach(input => { input.value = uidInput.value; });
+    }
+
+    function addProductRow() {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><input type="text" class="prod-name" placeholder="Item Name"></td>
+            <td><input type="text" class="prod-capacity" placeholder="Capacity"></td>
+            <td><input type="text" class="prod-model" placeholder="Model"></td>
+            <td><input type="text" class="prod-make" placeholder="Make"></td>
+            <td><input type="number" class="prod-wty-month" placeholder="M"></td>
+            <td><select class="prod-wty-clause"><option value="" disabled selected>Select...</option><option value="Onsite">Onsite</option><option value="Carry in">Carry in</option></select></td>
+            <td><input type="number" class="prod-qty" value="1" min="1" oninput="calculateRow(this)"></td>
+            <td><input type="number" class="prod-rate" value="0.00" min="0" step="0.01" oninput="calculateRow(this)"></td>
+            <td><select class="prod-gst" onchange="calculateRow(this)"><option value="0">0%</option><option value="5">5%</option><option value="12">12%</option><option value="18" selected>18%</option><option value="28">28%</option></select></td>
+            <td><input type="number" class="prod-basic input-bare" value="0.00" readonly></td>
+            <td><input type="number" class="prod-total input-bare" value="0.00" readonly></td>
+        `;
+        document.querySelector('#productTable tbody').appendChild(row);
+    }
+
+    function calculateRow(element) {
+        const row = element.closest('tr');
+        const qty = parseFloat(row.querySelector('.prod-qty').value) || 0;
+        const rate = parseFloat(row.querySelector('.prod-rate').value) || 0;
+        const gstPercent = parseFloat(row.querySelector('.prod-gst').value) || 0;
+
+        const basicValue = qty * rate;
+        const totalAmount = basicValue + (basicValue * (gstPercent / 100));
+
+        row.querySelector('.prod-basic').value = basicValue.toFixed(2);
+        row.querySelector('.prod-total').value = totalAmount.toFixed(2);
+        updateGrandTotal();
+    }
+
+    function updateGrandTotal() {
+        let totalBasic = 0;
+        document.querySelectorAll('.prod-basic').forEach(input => { totalBasic += parseFloat(input.value) || 0; });
+        document.getElementById('poAmount').value = totalBasic.toFixed(2);
+    }
+
+    function addChildRow() {
+        const parentUID = document.getElementById('uid').value; 
+        const row = document.createElement('tr');
+        // generateChildGUID() comes from utils.js
+        row.innerHTML = `
+            <td class="td-id"><input type="text" class="child-doc-id input-bare" value="${generateChildGUID()}" readonly></td>
+            <td class="td-id"><input type="text" class="child-parent-uid input-bare" value="${parentUID}" readonly></td>
+            <td class="td-doc"><select class="child-doc-name" style="width: 100%;"><option value="" disabled selected>Select Document...</option><option value="PO">PO</option><option value="Approval Mail">Approval Mail</option><option value="Price BOQ">Price BOQ</option><option value="Tech.BOQ">Tech.BOQ</option></select></td>
+            <td class="td-doc"><div class="custom-file-upload"><label class="custom-file-btn"><input type="file" class="child-attachment hidden-file-input" onchange="updateFileName(this)">📁 Browse...</label><span class="file-name-display">No file chosen</span></div></td>
+        `;
+        document.querySelector('#childTable tbody').appendChild(row);
+    }
+
+    // ADDED OPTIMIZATION: Check for 3MB limit before converting to prevent memory crashing
+    const getBase64 = (file) => new Promise((resolve) => {
+        if (!file) return resolve("None");
+        
+        const MAX_FILE_SIZE = 3 * 1024 * 1024; // 3 MB 
+        if (file.size > MAX_FILE_SIZE) {
+            alert(`File "${file.name}" is too large. Maximum size is 3MB.`);
+            return resolve("None"); 
+        }
+
+        const reader = new FileReader(); 
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve({ name: file.name, data: reader.result });
+        reader.onerror = () => resolve("None"); 
+    });
+
+    async function submitForm() {
+        if (!document.getElementById('salesPersonName').value.trim()) {
+            alert("Please enter or select a Sales Person Name before submitting.");
+            openTab(null, 'tab-basic', document.querySelectorAll('.tab-btn')[0]);
+            return;
+        }
+
+        const btn = document.querySelector('.btn-submit');
+        btn.innerText = "Processing Data..."; btn.disabled = true;
+        const val = id => document.getElementById(id).value;
+        const currentParentUID = val('uid'); 
+        
+        const products = [];
+        document.querySelectorAll('#productTable tbody tr').forEach(row => {
+            products.push({
+                "Product Name": row.querySelector('.prod-name').value, "Capacity": row.querySelector('.prod-capacity').value,
+                "Model": row.querySelector('.prod-model').value, "Make": row.querySelector('.prod-make').value,
+                "Warranty (Months)": row.querySelector('.prod-wty-month').value, "Warranty Clause": row.querySelector('.prod-wty-clause').value || "",
+                "QTY": row.querySelector('.prod-qty').value, "Rate": row.querySelector('.prod-rate').value,
+                "GST %": row.querySelector('.prod-gst').value, "PO Amount": row.querySelector('.prod-basic').value, "Total Amount": row.querySelector('.prod-total').value
+            });
+        });
+
+        const payload = {
+            "Sales Order": {
+                "UID": currentParentUID, "Sales Person Name": val('salesPersonName'), "Status": "Submitted", 
+                "Customer Name": val('customerName'), "Location": val('location'), "PO Number": val('poNumber'), "PO Date": val('poDate'),
+                "Order Type to mention": val('orderType') || "", "Order Source": val('orderSource') || "", "Segments": val('segment'), "FY": val('fy'), "ProstarM Branch": val('prostarmBranch'),
+                "Contact Person": val('contactPerson'), "Contact Details": val('contactDetails'), "Email": val('email'),
+                
+                "Billing Address": val('billingAddress'), "Bill to GST Number": val('billToGst'),
+                "Delivery Address": val('deliveryAddress'), "Ship to GST Number": val('shipToGst'),
+                "Installation Address": val('installationAddress'), "Pin code": val('pinCode'), 
+                "To be Completed On": val('toBeCompletedOn'), "Region /Zonal Office": val('regionZoneOffice'), "State": val('state'), "Zone": val('zone'), "Dispatch Type": val('dispatchType') || "", "Pickup Location": val('pickupLocation'), 
+                
+                "Installation Scope": val('installationScope') || "", "Retension / BG/Not required": val('retentionBg') || "", "% Of BG Retension": val('bgRetentionPercent'),
+                "Buyback Status": val('buyback') || "", "Buyback Configuration": val('buybackConfig'), "Buyback Amount": val('buybackAmount'), "Buyback Bill ?": val('buybackBill') || "",
+                "BOQ / Product details": val('boqProductDetails'), "Price bifurcation / PO Amount": val('poAmount'),
+                
+                "AMC Mentioned In PO": val('amcMentioned') || "",
+                "AMC Duration (Year)": val('amcDuration'),
+                "PM Required during warranty period": val('pmRequired') || "",
+                "Payments Terms": val('paymentTerms'),
+                "Payment Status": val('paymentStatus') || ""
+            },
+            "Products": products, "SalesChildTable": [], "RemarksTable": []
+        };
+
+        for (const row of document.querySelectorAll('#childTable tbody tr')) {
+            const fileInput = row.querySelector('.child-attachment');
+            let fileResult = "None";
+            if (fileInput && fileInput.files.length > 0) fileResult = await getBase64(fileInput.files[0]);
+            payload.SalesChildTable.push({ "Document ID": row.querySelector('.child-doc-id').value, "Parent_UID": currentParentUID, "Document Name": row.querySelector('.child-doc-name').value || "", "Attachment": fileResult });
+        }
+
+        // ADDED OPTIMIZATION: Replacing local storage with fetch request to Power Automate Webhook
+        const powerAutomateWebhookUrl = "https://8549b42c711be8948675eefb5cf215.dd.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/29/workflows/6d607144754f4f3687eba53cf96a9db3/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=P-2R-JOWsK6-ZgQR-xp5-UN6BpJWNKJZP0N4CNeLwj8"; // PLACE YOUR URL HERE
+        
+        try {
+            // NOTE: If you are testing locally and haven't setup your webhook yet, you can uncomment
+            // the 3 localStorage lines below to continue testing the UI, but remove them before production.
+            
+            // const existingOrders = JSON.parse(localStorage.getItem('crmOrders')) || [];
+            // existingOrders.push(payload);
+            // localStorage.setItem('crmOrders', JSON.stringify(existingOrders));
+            
+            // Send to Power Automate
+            const response = await fetch(powerAutomateWebhookUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                // To track UID increments if using an external DB now.
+                localStorage.setItem('simulatedDBLastUID', currentParentUID); 
+                alert("Order Submitted Successfully to Power Automate!\n\nClick OK to draft another new order.");
+                window.location.reload();
+            } else {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+        } catch (error) {
+            console.error("Submission failed:", error);
+            alert("Submission failed! Ensure your Power Automate URL is configured correctly or contact IT support.");
+            btn.innerText = "Submit Full Order"; 
+            btn.disabled = false;
+        }
+    }
+
+    window.onload = function() {
+        const dataList = document.getElementById('salesPersonList');
+        try {
+            const existingOrders = JSON.parse(localStorage.getItem('crmOrders')) || [];
+            const uniqueNames = new Set(); 
+            existingOrders.forEach(o => { if (o["Sales Order"] && o["Sales Order"]["Sales Person Name"]) uniqueNames.add(o["Sales Order"]["Sales Person Name"].trim()); });
+            uniqueNames.forEach(n => { if(n) dataList.appendChild(new Option(n, n)); });
+        } catch(e) {}
+
+        generateAutoUID(); 
+        generateFY(); 
+        toggleBuyback('');
+    };
+</script>
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Onboarding Team - Grid Queue</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="global.css">
+    <style>
+        .grid-container { background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        
+        /* Stats Header */
+        .stats-bar { display: flex; gap: 20px; padding: 16px 24px; background: #f8fafc; border-bottom: 1px solid var(--border); font-size: 14px; font-weight: 600; color: var(--text-muted); }
+        .stat-item span { color: var(--text-main); background: #e2e8f0; padding: 2px 8px; border-radius: 12px; margin-left: 6px; }
+        
+        .uid-badge { font-weight: 700; color: var(--primary); }
+        
+        /* Inline Status Dropdown */
+        .status-select { 
+            padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; border: 2px solid transparent; cursor: pointer; outline: none; transition: 0.2s;
+            appearance: none; -webkit-appearance: none;
+        }
+        .status-select:hover { border-color: #cbd5e1; }
+        
+        /* Status Colors */
+        .status-draft { background: #f1f5f9; color: #475569; }
+        .status-submitted { background: #dbeafe; color: #1e40af; }
+        .status-approved { background: #dcfce7; color: #166534; }
+        .status-rejected { background: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body>
+
+<div class="master-nav">
+    <div class="brand-container">
+        <img src="Prostarm-logo.png" alt="Prostarm" onerror="this.outerHTML='<div style=\'font-weight:bold; color:#2563eb;\'>PR</div>';">
+        <h2 style="margin: 0; font-size: 20px;">Onboarding Master Grid</h2>
+    </div>
+    <div class="master-nav-actions">
+        <a href="dashboard.html" class="btn btn-back">← Back to Dashboard</a>
+    </div>
+</div>
+
+<div class="grid-container">
+    <div class="stats-bar" id="statsBar">
+        </div>
+    <table id="queueTable">
+        <thead>
+            <tr>
+                <th>UID</th>
+                <th>Customer Details</th>
+                <th>Order Info</th>
+                <th>PO Amount</th>
+                <th>Sales Rep</th>
+                <th>Current Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            </tbody>
+    </table>
+</div>
+
+<script>
+    let ordersData = [];
+
+    function renderGrid() {
+        ordersData = JSON.parse(localStorage.getItem('crmOrders')) || [];
+        const tbody = document.querySelector('#queueTable tbody');
+        tbody.innerHTML = '';
+
+        const counts = { Draft: 0, Submitted: 0, Approved: 0, Rejected: 0 };
+
+        ordersData.forEach((order, index) => {
+            const header = order["Sales Order"];
+            let status = header["Status"] || "Submitted";
+            if (counts[status] !== undefined) counts[status]++;
+
+            // Determine class for dropdown styling
+            let statusClass = "status-submitted";
+            if (status === "Draft") statusClass = "status-draft";
+            if (status === "Approved") statusClass = "status-approved";
+            if (status === "Rejected") statusClass = "status-rejected";
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><span class="uid-badge">${header["UID"] || '-'}</span></td>
+                <td>
+                    <div style="font-weight: 600; color: #0f172a; margin-bottom: 4px;">${header["Customer Name"] || '-'}</div>
+                    <div style="font-size: 12px; color: #64748b;">${header["Location"] || '-'}</div>
+                </td>
+                <td>
+                    <div style="font-weight: 500; margin-bottom: 4px;">${header["Order Type to mention"] || '-'}</div>
+                    <div style="font-size: 12px; color: #64748b;">BOQ: ${header["BOQ / Product details"] ? header["BOQ / Product details"].substring(0,20)+'...' : 'N/A'}</div>
+                </td>
+                <td style="font-weight: 600;">₹ ${header["Price bifurcation / PO Amount"] || '0.00'}</td>
+                <td style="color: #475569;">${header["Sales Person Name"] || '-'}</td>
+                <td>
+                    <select class="status-select ${statusClass}" onchange="updateStatus(${index}, this.value)">
+                        <option value="Draft" ${status === 'Draft' ? 'selected' : ''}>Draft</option>
+                        <option value="Submitted" ${status === 'Submitted' ? 'selected' : ''}>Pending Review</option>
+                        <option value="Approved" ${status === 'Approved' ? 'selected' : ''}>Approved</option>
+                        <option value="Rejected" ${status === 'Rejected' ? 'selected' : ''}>Rejected / Fix</option>
+                    </select>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        document.getElementById('statsBar').innerHTML = `
+            <div class="stat-item">Pending Review <span style="background:#dbeafe; color:#1e40af;">${counts.Submitted}</span></div>
+            <div class="stat-item">Approved <span style="background:#dcfce7; color:#166534;">${counts.Approved}</span></div>
+            <div class="stat-item">Needs Fix <span style="background:#fee2e2; color:#991b1b;">${counts.Rejected}</span></div>
+            <div class="stat-item">Drafts <span>${counts.Draft}</span></div>
+        `;
+    }
+
+    function updateStatus(index, newStatus) {
+        ordersData[index]["Sales Order"]["Status"] = newStatus;
+        localStorage.setItem('crmOrders', JSON.stringify(ordersData));
+        renderGrid(); 
+    }
+
+    window.onload = function() {
+        if (!sessionStorage.getItem('loggedInUser')) { window.location.href = 'Index.html'; return; }
+        renderGrid();
+    };
+</script>
+<script src="utils.js"></script>
+</body>
+</html>
