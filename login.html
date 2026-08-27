@@ -4,57 +4,209 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Prostarm CRM</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="global.css">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .login-card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; border: 1px solid #e2e8f0; }
-        .logo-container { margin-bottom: 24px; }
-        .logo-container img { height: 40px; }
-        .form-group { margin-bottom: 20px; text-align: left; }
-        label { font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px; display: block; }
-        input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; box-sizing: border-box; font-family: inherit; }
-        input:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
-        .btn-login { width: 100%; background: #2563eb; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: 0.2s; margin-top: 10px; }
-        .btn-login:hover { background: #1d4ed8; }
-        .demo-text { margin-top: 20px; font-size: 12px; color: #64748b; }
+        body {
+            display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px;
+        }
+
+        .login-shell {
+            display: grid;
+            grid-template-columns: 1.05fr 1fr;
+            width: 100%;
+            max-width: 900px;
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+        }
+
+        /* Brand panel — the energy gradient carries the "Power Redefined" identity */
+        .brand-panel {
+            background: var(--primary-grad);
+            padding: 48px 40px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .brand-panel::before {
+            content: '';
+            position: absolute; inset: 0;
+            background:
+                radial-gradient(circle at 85% 15%, rgba(255,90,54,0.35) 0%, transparent 45%),
+                radial-gradient(circle at 10% 85%, rgba(255,255,255,0.12) 0%, transparent 40%);
+        }
+        .brand-panel .logo-chip {
+            background: rgba(255,255,255,0.96);
+            border-radius: var(--radius-md);
+            padding: 10px 16px;
+            display: inline-flex;
+            width: fit-content;
+            position: relative;
+            box-shadow: 0 8px 20px -6px rgba(0,0,0,0.25);
+        }
+        .brand-panel .logo-chip img { height: 26px; display: block; }
+        .brand-copy { position: relative; margin-top: 32px; }
+        .brand-copy h1 { font-size: 27px; line-height: 1.25; margin: 0 0 12px 0; font-weight: 800; letter-spacing: -0.02em; }
+        .brand-copy p { font-size: 14.5px; line-height: 1.6; color: rgba(255,255,255,0.85); margin: 0; max-width: 320px; }
+        .power-tag {
+            position: relative; margin-top: auto; padding-top: 28px;
+            display: flex; align-items: center; gap: 8px;
+            font-size: 12.5px; font-weight: 600; color: rgba(255,255,255,0.75);
+            letter-spacing: 0.03em; text-transform: uppercase;
+        }
+        .power-dot {
+            width: 8px; height: 8px; border-radius: 50%; background: #ff8a3d;
+            box-shadow: 0 0 0 rgba(255,138,61,0.6);
+            animation: dotPulse 2.4s var(--ease) infinite;
+        }
+        @keyframes dotPulse {
+            0% { box-shadow: 0 0 0 0 rgba(255,138,61,0.55); }
+            70% { box-shadow: 0 0 0 9px rgba(255,138,61,0); }
+            100% { box-shadow: 0 0 0 0 rgba(255,138,61,0); }
+        }
+
+        /* Form panel */
+        .form-panel { padding: 48px 40px; display: flex; flex-direction: column; justify-content: center; }
+        .form-panel h2 { margin: 0 0 6px 0; font-size: 22px; color: var(--text-main); }
+        .form-panel .subhead { margin: 0 0 28px 0; font-size: 14px; color: var(--text-muted); }
+
+        .form-group { margin-bottom: 18px; text-align: left; }
+        .form-group label { font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px; display: block; }
+        .form-group input {
+            width: 100%; padding: 12px 14px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+            font-size: 14px; box-sizing: border-box; font-family: inherit; transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+        }
+        .form-group input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(30,79,214,0.12); }
+
+        .btn-login {
+            width: 100%; background: var(--primary-grad); color: white; border: none; padding: 13px;
+            border-radius: var(--radius-sm); font-size: 15px; font-weight: 700; cursor: pointer;
+            transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease); margin-top: 8px;
+            box-shadow: var(--shadow-glow);
+        }
+        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 14px 26px -6px rgba(30,79,214,0.45); }
+        .btn-login:active { transform: translateY(0); }
+
+        .demo-text { margin-top: 20px; font-size: 12px; color: var(--text-faint); text-align: center; }
+
+        @media (max-width: 720px) {
+            .login-shell { grid-template-columns: 1fr; }
+            .brand-panel { padding: 36px 32px 28px; }
+            .power-tag { padding-top: 20px; }
+        }
     </style>
 </head>
 <body>
 
-<div class="login-card">
-    <div class="logo-container">
-        <img src="Prostarm-logo.png" alt="Prostarm CRM" onerror="this.outerHTML='<h2 style=\'color:#2563eb; margin:0;\'>PROSTARM</h2>';">
+<div class="login-shell">
+    <div class="brand-panel">
+        <div class="logo-chip">
+            <img src="Prostarm-logo.png" alt="Prostarm" onerror="this.parentElement.outerHTML='<div style=\'font-weight:800; font-size:20px; color:#1e4fd6;\'>PROSTARM</div>';">
+        </div>
+        <div class="brand-copy">
+            <h1>Power Redefined,<br>now for your pipeline.</h1>
+            <p>Sign in to manage onboarding, orders and dispatch across your sales network from one place.</p>
+        </div>
+        <div class="power-tag"><span class="power-dot"></span> Prostarm CRM</div>
     </div>
-    <h2 style="margin-top: 0; font-size: 20px; color: #0f172a;">Sign in to CRM</h2>
-    
-    <div class="form-group">
-        <label>Email Address</label>
-        <input type="email" id="email" placeholder="name@prostarm.com">
+
+    <div class="form-panel">
+        <h2>Sign in to CRM</h2>
+        <p class="subhead">Enter your username to continue.</p>
+
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="email" autocomplete="username" placeholder="e.g. rahul.sharma">
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="password" autocomplete="current-password" placeholder="••••••••">
+        </div>
+
+        <div id="loginError" style="display:none; background:var(--danger-light); color:#9f1d1d; border:1px solid #f6c6c6; border-radius:var(--radius-sm); padding:10px 14px; font-size:13px; font-weight:600; margin-bottom:14px;"></div>
+
+        <button class="btn-login" id="loginBtn" onclick="login()">Sign In</button>
+        <div class="demo-text" id="demoText">Sign in with the username and password issued to you.</div>
     </div>
-    <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="password" placeholder="••••••••">
-    </div>
-    
-    <button class="btn-login" onclick="login()">Sign In</button>
-    <div class="demo-text">Use any email/password to log into the demo.</div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
     // formatName() is provided by utils.js (loaded at the bottom of this page)
 
-    function login() {
-        const email = document.getElementById('email').value.trim();
-        if(email) {
-            const formattedName = formatName(email);
-            sessionStorage.setItem('loggedInUser', formattedName);
-            sessionStorage.setItem('loggedInEmail', email);
+    let userDirectory = null; // cached rows from user-details.xlsx once loaded
+
+    async function loadUserDirectory() {
+        if (userDirectory) return userDirectory;
+        const response = await fetch('user-details.xlsx');
+        if (!response.ok) throw new Error(`Could not load user-details.xlsx (HTTP ${response.status})`);
+        const buffer = await response.arrayBuffer();
+        const workbook = XLSX.read(buffer, { type: 'array' });
+        const sheet = workbook.Sheets['User Details'] || workbook.Sheets[workbook.SheetNames[0]];
+        userDirectory = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+        return userDirectory;
+    }
+
+    function showLoginError(msg) {
+        const box = document.getElementById('loginError');
+        box.textContent = msg;
+        box.style.display = 'block';
+    }
+
+    function hideLoginError() {
+        document.getElementById('loginError').style.display = 'none';
+    }
+
+    async function login() {
+        hideLoginError();
+        const username = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+
+        if (!username || !password) {
+            showLoginError('Please enter both username and password.');
+            return;
+        }
+
+        const btn = document.getElementById('loginBtn');
+        btn.disabled = true;
+        btn.innerText = 'Signing in...';
+
+        try {
+            const users = await loadUserDirectory();
+            const match = users.find(u =>
+                String(u['Username']).trim().toLowerCase() === username.toLowerCase() &&
+                String(u['Password']) === password
+            );
+
+            if (!match) {
+                showLoginError('Invalid username or password.');
+                btn.disabled = false;
+                btn.innerText = 'Sign In';
+                return;
+            }
+
+            const level = String(match['Level'] || 'User').trim();
+            const fullName = String(match['Full Name'] || '').trim() || formatName(username);
+            const emailAddr = String(match['Email'] || '').trim();
+
+            sessionStorage.setItem('loggedInUser', fullName);
+            sessionStorage.setItem('loggedInEmail', emailAddr);
+            sessionStorage.setItem('userLevel', level);
             window.location.href = 'dashboard.html';
-        } else {
-            alert("Please enter an email address.");
+        } catch (err) {
+            console.error('Login failed', err);
+            showLoginError('Could not verify your credentials right now. Please try again in a moment.');
+            btn.disabled = false;
+            btn.innerText = 'Sign In';
         }
     }
-    
+
     document.getElementById("password").addEventListener("keypress", function(event) {
         if (event.key === "Enter") {
             event.preventDefault();

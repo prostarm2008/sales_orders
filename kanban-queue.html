@@ -16,9 +16,9 @@
         
         /* Column Specific Colors */
         .col-draft .column-header { border-bottom-color: #94a3b8; color: #475569; }
-        .col-submitted .column-header { border-bottom-color: #3b82f6; color: #1e40af; }
-        .col-approved .column-header { border-bottom-color: #10b981; color: #065f46; }
-        .col-rejected .column-header { border-bottom-color: #ef4444; color: #991b1b; }
+        .col-submitted .column-header { border-bottom-color: var(--primary); color: #173e9e; }
+        .col-approved .column-header { border-bottom-color: #16a34a; color: #065f46; }
+        .col-rejected .column-header { border-bottom-color: #dc2626; color: #9f1d1d; }
         
         .card-list { padding: 12px; flex: 1; overflow-y: auto; min-height: 200px;}
         
@@ -35,18 +35,36 @@
         .count-badge { background: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
     </style>
 </head>
-<body>
+<body class="has-sidebar">
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">☰</button>
+<div class="sidebar-backdrop" onclick="toggleSidebar()"></div>
+<aside class="app-sidebar">
+    <div class="sidebar-brand">
+        <img src="Prostarm-logo.png" alt="Prostarm" onerror="this.outerHTML='<div style=\'font-weight:800; color:#1e4fd6; font-size:15px;\'>PROSTARM</div>';">
+    </div>
+    <nav class="sidebar-nav">
+        <div class="sidebar-section-label">Workspace</div>
+            <a href="Index.html" class="sidebar-link" data-roles="User,Manager"><span class="sidebar-icon">📝</span>Sales Order Entry</a>
+            <a href="dashboard.html" class="sidebar-link" data-roles="User,Manager"><span class="sidebar-icon">📊</span>Dashboard</a>
+            <a href="manager-analytics-dashboard.html" class="sidebar-link" data-roles="Manager"><span class="sidebar-icon">📈</span>Manager Analytics</a>
+            <a href="grid-queue.html" class="sidebar-link" data-roles="Manager"><span class="sidebar-icon">🗂️</span>Grid Queue</a>
+            <a href="kanban-queue.html" class="sidebar-link active" data-roles="Manager"><span class="sidebar-icon">🗃️</span>Kanban Board</a>
+            <a href="settings.html" class="sidebar-link" data-roles="Manager"><span class="sidebar-icon">⚙️</span>Settings</a>
+        <a href="#" class="sidebar-link sidebar-logout" onclick="logout(); return false;"><span class="sidebar-icon">🚪</span>Sign Out</a>
+    </nav>
+    <div class="sidebar-footer">
+        Prostarm CRM &middot; Power Redefined
+    </div>
+</aside>
+
 
 <div class="master-nav">
     <div class="brand-container">
-        <img src="Prostarm-logo.png" alt="Prostarm" onerror="this.outerHTML='<div style=\'font-weight:bold; color:#2563eb;\'>PR</div>';">
+        <img src="Prostarm-logo.png" alt="Prostarm" onerror="this.outerHTML='<div style=\'font-weight:bold; color:#1e4fd6;\'>PR</div>';">
         <div>
             <h2 style="margin: 0; font-size: 20px;">Onboarding Team Queue</h2>
             <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Drag and drop cards to update pipeline status</div>
         </div>
-    </div>
-    <div class="master-nav-actions">
-        <a href="dashboard.html" class="btn btn-back">← Back to Dashboard</a>
     </div>
 </div>
 
@@ -158,7 +176,7 @@
                 <div class="card-uid">${header["UID"] || 'N/A'}</div>
                 <div class="card-customer">${header["Customer Name"] || 'Unnamed Customer'}</div>
                 <div class="card-details">
-                    <span>${header["Order Type to mention"] || '-'}</span>
+                    <span>${orderTypeLabel(header["Order Type to mention"]) || '-'}</span>
                     <span style="font-weight:600;">₹ ${header["Price bifurcation / PO Amount"] || '0.00'}</span>
                 </div>
                 <div class="card-salesperson">👤 ${header["Sales Person Name"] || 'Unknown'}</div>
@@ -193,6 +211,8 @@
 
     window.onload = async function() {
         if (!sessionStorage.getItem('loggedInUser')) { window.location.href = 'login.html'; return; }
+        if (!enforcePageAccess()) return;
+        applySidebarAccess();
         await loadOrders();
         renderBoard();
     };

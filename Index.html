@@ -50,8 +50,8 @@
         .input-bare:focus { box-shadow: none; outline: none;}
         
         .btn-primary { margin-bottom: 10px; }
-        .btn-remove { color: #ef4444; border: none; background: none; cursor: pointer; font-size: 16px; font-weight: bold; transition: 0.2s; padding: 4px; border-radius: 4px;}
-        .btn-remove:hover { background-color: #fee2e2; color: #b91c1c; }
+        .btn-remove { color: #dc2626; border: none; background: none; cursor: pointer; font-size: 16px; font-weight: bold; transition: 0.2s; padding: 4px; border-radius: 4px;}
+        .btn-remove:hover { background-color: #fbd9d9; color: #b91c1c; }
         
         /* Navigation & Submit Sections */
         .submit-section { margin-top: 30px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 24px; }
@@ -67,15 +67,33 @@
         .file-name-display { font-size: 12px; color: #64748b; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     </style>
 </head>
-<body>
+<body class="has-sidebar">
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">☰</button>
+<div class="sidebar-backdrop" onclick="toggleSidebar()"></div>
+<aside class="app-sidebar">
+    <div class="sidebar-brand">
+        <img src="Prostarm-logo.png" alt="Prostarm" onerror="this.outerHTML='<div style=\'font-weight:800; color:#1e4fd6; font-size:15px;\'>PROSTARM</div>';">
+    </div>
+    <nav class="sidebar-nav">
+        <div class="sidebar-section-label">Workspace</div>
+            <a href="Index.html" class="sidebar-link active" data-roles="User,Manager"><span class="sidebar-icon">📝</span>Sales Order Entry</a>
+            <a href="dashboard.html" class="sidebar-link" data-roles="User,Manager"><span class="sidebar-icon">📊</span>Dashboard</a>
+            <a href="manager-analytics-dashboard.html" class="sidebar-link" data-roles="Manager"><span class="sidebar-icon">📈</span>Manager Analytics</a>
+            <a href="grid-queue.html" class="sidebar-link" data-roles="Manager"><span class="sidebar-icon">🗂️</span>Grid Queue</a>
+            <a href="kanban-queue.html" class="sidebar-link" data-roles="Manager"><span class="sidebar-icon">🗃️</span>Kanban Board</a>
+            <a href="settings.html" class="sidebar-link" data-roles="Manager"><span class="sidebar-icon">⚙️</span>Settings</a>
+        <a href="#" class="sidebar-link sidebar-logout" onclick="logout(); return false;"><span class="sidebar-icon">🚪</span>Sign Out</a>
+    </nav>
+    <div class="sidebar-footer">
+        Prostarm CRM &middot; Power Redefined
+    </div>
+</aside>
+
 
 <div class="master-nav">
     <div class="brand-container">
-        <img src="Prostarm-logo.png" alt="Prostarm" onerror="this.outerHTML='<div style=\'font-weight:bold; color:#2563eb;\'>PR</div>';">
+        <img src="Prostarm-logo.png" alt="Prostarm" onerror="this.outerHTML='<div style=\'font-weight:bold; color:#1e4fd6;\'>PR</div>';">
         <h2 style="margin: 0; border: none; padding: 0; color: var(--primary);">Sales Order Entry</h2>
-    </div>
-    <div class="master-nav-actions">
-        <a href="dashboard.html" class="btn btn-back">← Back to Dashboard</a>
     </div>
 </div>
 
@@ -92,7 +110,7 @@
     
     <!-- TAB 1: BASIC INFO -->
     <div id="tab-basic" class="tab-content active">
-        <h3 style="color: #2563eb; text-transform: uppercase;">General Details</h3>
+        <h3 style="color: #1e4fd6; text-transform: uppercase;">General Details</h3>
         <div class="form-grid">
             <div class="form-group"><label>UID (Auto)</label><input type="text" id="uid" readonly></div>
             <div class="form-group">
@@ -108,8 +126,8 @@
             <div class="form-group"><label>Order Type</label>
                 <select id="orderType">
                     <option value="" disabled selected>Select Type...</option>
-                    <option value="Dealer">Government</option>
-                    <option value="Retail">Private</option>
+                    <option value="Government">Government</option>
+                    <option value="Private">Private</option>
                 </select>
             </div>
             <div class="form-group"><label>Order Source</label>
@@ -155,7 +173,7 @@
 
         <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;">
 
-        <h3 style="color: #2563eb; text-transform: uppercase;">Contact Information</h3>
+        <h3 style="color: #1e4fd6; text-transform: uppercase;">Contact Information</h3>
         <div class="form-grid">
             <div class="form-group"><label>Contact Person</label><input type="text" id="contactPerson" placeholder="Full Name"></div>
             <div class="form-group"><label>Contact Details</label><input type="tel" id="contactDetails" placeholder="Mobile Number"></div>
@@ -169,7 +187,7 @@
 
     <!-- TAB 2: LOGISTICS -->
     <div id="tab-logistics" class="tab-content">
-        <h3 style="color: #2563eb; text-transform: uppercase;">Addresses & Dispatch</h3>
+        <h3 style="color: #1e4fd6; text-transform: uppercase;">Addresses & Dispatch</h3>
         <div class="form-grid">
             <div class="form-group span-2"><label>Billing Address</label><textarea id="billingAddress" rows="2" placeholder="Full Billing Address"></textarea></div>
             <div class="form-group"><label>Bill to GST Number</label><input type="text" id="billToGst" placeholder="Enter Billing GSTIN"></div>
@@ -241,7 +259,7 @@
 
     <!-- TAB 3: COMMERCIALS -->
     <div id="tab-commercials" class="tab-content">
-        <h3 style="color: #2563eb; text-transform: uppercase;">Commercials & Scope</h3>
+        <h3 style="color: #1e4fd6; text-transform: uppercase;">Commercials & Scope</h3>
         
         <div class="form-grid">
             <div class="form-group"><label>Installation Scope</label>
@@ -343,7 +361,7 @@
 
     <!-- TAB 4: PRODUCTS -->
     <div id="tab-products" class="tab-content">
-        <h3 style="color: #2563eb; text-transform: uppercase;">Product Line Items</h3>
+        <h3 style="color: #1e4fd6; text-transform: uppercase;">Product Line Items</h3>
         <div class="table-responsive">
             <table id="productTable">
                 <thead>
@@ -357,12 +375,20 @@
                         <th style="width: 5%">QTY</th>
                         <th style="width: 8%">Rate</th>
                         <th style="width: 7%">GST %</th>
-                        <th style="background-color: #bfdbfe; width: 10%; color: #1e3a8a;">Basic</th>
-                        <th style="background-color: #bfdbfe; width: 10%; color: #1e3a8a;">Total</th>
+                        <th style="background-color: #cbdaff; width: 10%; color: #122c73;">Basic</th>
+                        <th style="background-color: #cbdaff; width: 10%; color: #122c73;">Total</th>
                         <th class="td-action">Act</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
+                <tfoot>
+                    <tr style="background-color: #eaf0ff; font-weight: 700;">
+                        <td colspan="9" style="text-align: right; color: #122c73;">Grand Total</td>
+                        <td id="sumBasic" style="background-color: #cbdaff; color: #122c73;">0.00</td>
+                        <td id="sumTotal" style="background-color: #cbdaff; color: #122c73;">0.00</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
             </table>
         </div>
         <button class="btn btn-primary" type="button" onclick="addProductRow()">+ Add Product</button>
@@ -375,7 +401,7 @@
 
     <!-- TAB 5: DOCS -->
     <div id="tab-docs" class="tab-content">
-        <h3 style="color: #2563eb; text-transform: uppercase;">Documents Line Items</h3>
+        <h3 style="color: #1e4fd6; text-transform: uppercase;">Documents Line Items</h3>
         <div class="table-responsive">
             <table id="childTable">
                 <thead>
@@ -461,7 +487,7 @@
         const span = input.closest('.custom-file-upload').querySelector('.file-name-display');
         if (input.files.length > 0) {
             span.textContent = input.files[0].name;
-            span.style.color = '#2563eb'; span.style.fontWeight = '600';
+            span.style.color = '#1e4fd6'; span.style.fontWeight = '600';
         } else {
             span.textContent = "No file chosen";
             span.style.color = '#64748b'; span.style.fontWeight = '400';
@@ -562,8 +588,15 @@
 
     function updateGrandTotal() {
         let totalBasic = 0;
+        let totalAmount = 0;
         document.querySelectorAll('.prod-basic').forEach(input => { totalBasic += parseFloat(input.value) || 0; });
+        document.querySelectorAll('.prod-total').forEach(input => { totalAmount += parseFloat(input.value) || 0; });
         document.getElementById('poAmount').value = totalBasic.toFixed(2);
+
+        const sumBasicEl = document.getElementById('sumBasic');
+        const sumTotalEl = document.getElementById('sumTotal');
+        if (sumBasicEl) sumBasicEl.textContent = totalBasic.toFixed(2);
+        if (sumTotalEl) sumTotalEl.textContent = totalAmount.toFixed(2);
     }
 
     function addChildRow() {
@@ -579,15 +612,23 @@
         document.querySelector('#childTable tbody').appendChild(row);
     }
 
-    async function submitForm() {
+async function submitForm() {
         if (!document.getElementById('salesPersonName').value.trim()) {
             alert("Please enter or select a Sales Person Name before submitting.");
             openTab(null, 'tab-basic', document.querySelectorAll('.tab-btn')[0]);
             return;
         }
 
-        const btn = document.querySelector('.btn-submit');
-        btn.innerText = "Processing Data..."; btn.disabled = true;
+        // Target the submit button to prevent double-clicks
+        const submitBtn = Array.from(document.querySelectorAll('.btn-submit')).find(b => b.innerText.includes("Submit Full Order") || b.innerText.includes("Processing"));
+        
+        if (submitBtn) {
+            submitBtn.innerText = "Processing Data... ⏳"; 
+            submitBtn.disabled = true;
+            submitBtn.style.pointerEvents = "none"; 
+            submitBtn.style.opacity = "0.8";
+        }
+
         const val = id => document.getElementById(id).value;
         const currentParentUID = val('uid'); 
         
@@ -595,7 +636,7 @@
         document.querySelectorAll('#productTable tbody tr').forEach(row => {
             products.push({
                 "Product ID": row.querySelector('.prod-id').value, 
-                "Parent UID": currentParentUID,
+                "Parent UID P": currentParentUID, // FIXED: Now exactly matches Power Automate schema
                 "Product Name": row.querySelector('.prod-name').value, 
                 "Capacity": row.querySelector('.prod-capacity').value,
                 "Model": row.querySelector('.prod-model').value, 
@@ -609,6 +650,19 @@
                 "Total Amount": row.querySelector('.prod-total').value
             });
         });
+
+        // Product Validation to ensure the array is never empty
+        if (products.length === 0) {
+            alert("Please add at least one Product Line Item before submitting.");
+            openTab(null, 'tab-products', document.querySelectorAll('.tab-btn')[3]);
+            if (submitBtn) {
+                submitBtn.innerText = "Submit Full Order"; 
+                submitBtn.disabled = false;
+                submitBtn.style.pointerEvents = "auto";
+                submitBtn.style.opacity = "1";
+            }
+            return;
+        }
 
         const payload = {
             "Sales Order": {
@@ -629,7 +683,9 @@
                 "Payments Terms": val('paymentTerms'),
                 "Payment Status": val('paymentStatus') || ""
             },
-            "Products": products, "SalesChildTable": [], "RemarksTable": []
+            "Products": products, 
+            "SalesChildTable": [], 
+            "RemarksTable": []
         };
 
         for (const row of document.querySelectorAll('#childTable tbody tr')) {
@@ -640,7 +696,7 @@
             }
             payload.SalesChildTable.push({ 
                 "Document ID": row.querySelector('.child-doc-id').value, 
-                "Parent_UID": currentParentUID, 
+                "Parent_UID D": currentParentUID, // FIXED: Now exactly matches Power Automate schema
                 "Document Name": row.querySelector('.child-doc-name').value || "", 
                 "Attachment": attachmentValue 
             });
@@ -648,11 +704,17 @@
 
         const powerAutomateWebhookUrl = "https://8549b42c711be8948675eefb5cf215.dd.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/29/workflows/6d607144754f4f3687eba53cf96a9db3/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=P-2R-JOWsK6-ZgQR-xp5-UN6BpJWNKJZP0N4CNeLwj8";
         
+        // Save locally - bypasses quota limits safely so cloud sync isn't blocked
         try {
             const existingOrders = JSON.parse(localStorage.getItem('crmOrders')) || [];
             existingOrders.push(payload);
             localStorage.setItem('crmOrders', JSON.stringify(existingOrders));
-            
+        } catch (localErr) {
+            console.warn("Local storage is full. Proceeding with cloud sync.");
+        }
+        
+        // Send to Microsoft Power Automate
+        try {
             const response = await fetch(powerAutomateWebhookUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -660,22 +722,31 @@
             });
 
             if (response.ok) {
-                localStorage.setItem('simulatedDBLastUID', currentParentUID); 
+                try { localStorage.setItem('simulatedDBLastUID', currentParentUID); } catch(e){} 
                 alert("Order Submitted Successfully to Power Automate!\n\nClick OK to draft another new order.");
                 window.location.reload();
             } else {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                const errText = await response.text();
+                throw new Error(`HTTP ${response.status}: ${errText.slice(0, 100)}...`);
             }
         } catch (error) {
             console.error("Submission failed:", error);
-            alert("Submission failed! Ensure your Power Automate URL is configured correctly or contact IT support.");
-            btn.innerText = "Submit Full Order"; 
-            btn.disabled = false;
+            alert(`Microsoft Power Automate rejected the submission.\n\nReason: ${error.message}\n\nPlease ensure your Power Automate flow expects the exact data fields in this form.`);
+            
+            // Turn the button back on so the user can fix the form and try again
+            if (submitBtn) {
+                submitBtn.innerText = "Submit Full Order"; 
+                submitBtn.disabled = false;
+                submitBtn.style.pointerEvents = "auto";
+                submitBtn.style.opacity = "1";
+            }
         }
     }
 
     window.onload = function() {
         if (!sessionStorage.getItem('loggedInUser')) { window.location.href = 'login.html'; return; }
+        if (!enforcePageAccess()) return;
+        applySidebarAccess();
 
         const dataList = document.getElementById('salesPersonList');
         try {

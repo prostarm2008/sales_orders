@@ -28,15 +28,33 @@
         .btn-save:hover { transform: translateY(-2px); box-shadow: 0 12px 24px -6px rgba(37,99,235,0.4); }
     </style>
 </head>
-<body>
+<body class="has-sidebar">
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">☰</button>
+<div class="sidebar-backdrop" onclick="toggleSidebar()"></div>
+<aside class="app-sidebar">
+    <div class="sidebar-brand">
+        <img src="Prostarm-logo.png" alt="Prostarm" onerror="this.outerHTML='<div style=\'font-weight:800; color:#1e4fd6; font-size:15px;\'>PROSTARM</div>';">
+    </div>
+    <nav class="sidebar-nav">
+        <div class="sidebar-section-label">Workspace</div>
+            <a href="Index.html" class="sidebar-link" data-roles="User,Manager"><span class="sidebar-icon">📝</span>Sales Order Entry</a>
+            <a href="dashboard.html" class="sidebar-link" data-roles="User,Manager"><span class="sidebar-icon">📊</span>Dashboard</a>
+            <a href="manager-analytics-dashboard.html" class="sidebar-link" data-roles="Manager"><span class="sidebar-icon">📈</span>Manager Analytics</a>
+            <a href="grid-queue.html" class="sidebar-link" data-roles="Manager"><span class="sidebar-icon">🗂️</span>Grid Queue</a>
+            <a href="kanban-queue.html" class="sidebar-link" data-roles="Manager"><span class="sidebar-icon">🗃️</span>Kanban Board</a>
+            <a href="settings.html" class="sidebar-link active" data-roles="Manager"><span class="sidebar-icon">⚙️</span>Settings</a>
+        <a href="#" class="sidebar-link sidebar-logout" onclick="logout(); return false;"><span class="sidebar-icon">🚪</span>Sign Out</a>
+    </nav>
+    <div class="sidebar-footer">
+        Prostarm CRM &middot; Power Redefined
+    </div>
+</aside>
+
 
 <div class="master-nav">
     <div class="brand-container">
-        <img src="Prostarm-logo.png" alt="Prostarm" onerror="this.outerHTML='<div style=\'font-weight:bold; color:#2563eb;\'>PR</div>';">
+        <img src="Prostarm-logo.png" alt="Prostarm" onerror="this.outerHTML='<div style=\'font-weight:bold; color:#1e4fd6;\'>PR</div>';">
         <h2 style="margin: 0; font-size: 20px;">Settings</h2>
-    </div>
-    <div class="master-nav-actions">
-        <a href="dashboard.html" class="btn btn-back">← Back to Dashboard</a>
     </div>
 </div>
 
@@ -57,7 +75,7 @@
         </div>
         <div class="form-group">
             <label>Role / Access Level</label>
-            <input type="text" value="Sales Representative (Standard)" readonly>
+            <input type="text" id="prof-level" readonly>
         </div>
     </div>
 
@@ -91,9 +109,12 @@
         const email = sessionStorage.getItem('loggedInEmail');
         
         if (!user) { window.location.href = 'login.html'; return; }
+        if (!enforcePageAccess()) return;
+        applySidebarAccess();
         
         document.getElementById('prof-name').value = user;
         document.getElementById('prof-email').value = email || "Not Provided";
+        document.getElementById('prof-level').value = getUserLevel();
 
         const savedCurrency = localStorage.getItem('prefCurrency');
         const savedDispatch = localStorage.getItem('prefDispatch');
@@ -108,7 +129,7 @@
         localStorage.setItem('prefDispatch', document.getElementById('pref-dispatch').value);
 
         btn.innerText = "Saved ✓";
-        btn.style.backgroundColor = "#10b981"; 
+        btn.style.backgroundColor = "#16a34a"; 
         
         setTimeout(() => {
             btn.innerText = "Save Preferences";

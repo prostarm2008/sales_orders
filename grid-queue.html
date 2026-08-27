@@ -24,20 +24,38 @@
         
         /* Status Colors */
         .status-draft { background: #f1f5f9; color: #475569; }
-        .status-submitted { background: #dbeafe; color: #1e40af; }
-        .status-approved { background: #dcfce7; color: #166534; }
-        .status-rejected { background: #fee2e2; color: #991b1b; }
+        .status-submitted { background: #e4eaff; color: #173e9e; }
+        .status-approved { background: #dcf7e3; color: #15803d; }
+        .status-rejected { background: #fbd9d9; color: #9f1d1d; }
     </style>
 </head>
-<body>
+<body class="has-sidebar">
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">☰</button>
+<div class="sidebar-backdrop" onclick="toggleSidebar()"></div>
+<aside class="app-sidebar">
+    <div class="sidebar-brand">
+        <img src="Prostarm-logo.png" alt="Prostarm" onerror="this.outerHTML='<div style=\'font-weight:800; color:#1e4fd6; font-size:15px;\'>PROSTARM</div>';">
+    </div>
+    <nav class="sidebar-nav">
+        <div class="sidebar-section-label">Workspace</div>
+            <a href="Index.html" class="sidebar-link" data-roles="User,Manager"><span class="sidebar-icon">📝</span>Sales Order Entry</a>
+            <a href="dashboard.html" class="sidebar-link" data-roles="User,Manager"><span class="sidebar-icon">📊</span>Dashboard</a>
+            <a href="manager-analytics-dashboard.html" class="sidebar-link" data-roles="Manager"><span class="sidebar-icon">📈</span>Manager Analytics</a>
+            <a href="grid-queue.html" class="sidebar-link active" data-roles="Manager"><span class="sidebar-icon">🗂️</span>Grid Queue</a>
+            <a href="kanban-queue.html" class="sidebar-link" data-roles="Manager"><span class="sidebar-icon">🗃️</span>Kanban Board</a>
+            <a href="settings.html" class="sidebar-link" data-roles="Manager"><span class="sidebar-icon">⚙️</span>Settings</a>
+        <a href="#" class="sidebar-link sidebar-logout" onclick="logout(); return false;"><span class="sidebar-icon">🚪</span>Sign Out</a>
+    </nav>
+    <div class="sidebar-footer">
+        Prostarm CRM &middot; Power Redefined
+    </div>
+</aside>
+
 
 <div class="master-nav">
     <div class="brand-container">
-        <img src="Prostarm-logo.png" alt="Prostarm" onerror="this.outerHTML='<div style=\'font-weight:bold; color:#2563eb;\'>PR</div>';">
+        <img src="Prostarm-logo.png" alt="Prostarm" onerror="this.outerHTML='<div style=\'font-weight:bold; color:#1e4fd6;\'>PR</div>';">
         <h2 style="margin: 0; font-size: 20px;">Onboarding Master Grid</h2>
-    </div>
-    <div class="master-nav-actions">
-        <a href="dashboard.html" class="btn btn-back">← Back to Dashboard</a>
     </div>
 </div>
 
@@ -147,7 +165,7 @@
                     <div style="font-size: 12px; color: #64748b;">${header["Location"] || '-'}</div>
                 </td>
                 <td>
-                    <div style="font-weight: 500; margin-bottom: 4px;">${header["Order Type to mention"] || '-'}</div>
+                    <div style="font-weight: 500; margin-bottom: 4px;">${orderTypeLabel(header["Order Type to mention"]) || '-'}</div>
                     <div style="font-size: 12px; color: #64748b;">BOQ: ${header["BOQ / Product details"] ? header["BOQ / Product details"].substring(0,20)+'...' : 'N/A'}</div>
                 </td>
                 <td style="font-weight: 600;">₹ ${header["Price bifurcation / PO Amount"] || '0.00'}</td>
@@ -165,9 +183,9 @@
         });
 
         document.getElementById('statsBar').innerHTML = `
-            <div class="stat-item">Pending Review <span style="background:#dbeafe; color:#1e40af;">${counts.Submitted}</span></div>
-            <div class="stat-item">Approved <span style="background:#dcfce7; color:#166534;">${counts.Approved}</span></div>
-            <div class="stat-item">Needs Fix <span style="background:#fee2e2; color:#991b1b;">${counts.Rejected}</span></div>
+            <div class="stat-item">Pending Review <span style="background:#e4eaff; color:#173e9e;">${counts.Submitted}</span></div>
+            <div class="stat-item">Approved <span style="background:#dcf7e3; color:#15803d;">${counts.Approved}</span></div>
+            <div class="stat-item">Needs Fix <span style="background:#fbd9d9; color:#9f1d1d;">${counts.Rejected}</span></div>
             <div class="stat-item">Drafts <span>${counts.Draft}</span></div>
         `;
     }
@@ -188,6 +206,8 @@
 
     window.onload = async function() {
         if (!sessionStorage.getItem('loggedInUser')) { window.location.href = 'login.html'; return; }
+        if (!enforcePageAccess()) return;
+        applySidebarAccess();
         await loadOrders();
         renderGrid();
     };

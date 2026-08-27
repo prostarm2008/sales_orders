@@ -16,7 +16,7 @@
         .doc-title p { margin: 0; font-size: 14px; color: #64748b; font-weight: 600;}
 
         .info-section { margin-bottom: 30px; }
-        .section-title { background: #f8fafc; padding: 8px 12px; font-weight: 700; font-size: 14px; text-transform: uppercase; border-left: 4px solid #2563eb; margin-bottom: 15px; color: #0f172a;}
+        .section-title { background: #f8fafc; padding: 8px 12px; font-weight: 700; font-size: 14px; text-transform: uppercase; border-left: 4px solid #1e4fd6; margin-bottom: 15px; color: #0f172a;}
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .data-row { display: flex; font-size: 13px; line-height: 1.6; margin-bottom: 4px;}
         .data-label { width: 140px; font-weight: 600; color: #475569; flex-shrink: 0;}
@@ -30,7 +30,7 @@
 
         .print-actions { max-width: 1000px; margin: 0 auto 20px auto; display: flex; justify-content: space-between; }
         .btn { padding: 11px 22px; font-weight: 600; border: none; border-radius: 8px; cursor: pointer; text-decoration: none; font-size: 14px; transition: all 0.2s cubic-bezier(0.4,0,0.2,1); display: inline-flex; align-items: center; gap: 6px;}
-        .btn-print { background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%); color: white; box-shadow: 0 8px 20px -4px rgba(37,99,235,0.28);}
+        .btn-print { background: linear-gradient(135deg, #1e4fd6 0%, #7c3aed 100%); color: white; box-shadow: 0 8px 20px -4px rgba(37,99,235,0.28);}
         .btn-print:hover { transform: translateY(-2px); box-shadow: 0 12px 24px -6px rgba(37,99,235,0.4); }
         .btn-back { background: #eef1f6; color: #0f172a; border: 1px solid #e6eaf2; }
         .btn-back:hover { background: #e2e8f0; }
@@ -60,10 +60,10 @@
 
 <div class="document-container">
     <div class="doc-header">
-        <img src="Prostarm-logo.png" alt="Prostarm CRM" class="brand-logo" onerror="this.outerHTML='<div style=\'font-size:24px; font-weight:bold; color:#2563eb;\'>PROSTARM</div>';">
+        <img src="Prostarm-logo.png" alt="Prostarm CRM" class="brand-logo" onerror="this.outerHTML='<div style=\'font-size:24px; font-weight:bold; color:#1e4fd6;\'>PROSTARM</div>';">
         <div class="doc-title">
-            <h1>Sales Order</h1>
-            <p>ID: <span id="p-uid">Loading...</span></p>
+            <h1>PO Details</h1>
+            <p>UID: <span id="p-uid">Loading...</span></p>
         </div>
     </div>
 
@@ -98,13 +98,13 @@
                 
                 <!-- Dynamic Buyback Details -->
                 <div id="buyback-details-section" class="hidden" style="margin-top: 6px; padding: 10px; background-color: #f8fafc; border-radius: 6px; border: 1px dashed #cbd5e1;">
-                    <div class="data-row"><div class="data-label" style="color:#2563eb;">Buyback Amount:</div><div class="data-value" id="p-buybackAmount" style="color:#2563eb; font-weight:600;"></div></div>
+                    <div class="data-row"><div class="data-label" style="color:#1e4fd6;">Buyback Amount:</div><div class="data-value" id="p-buybackAmount" style="color:#1e4fd6; font-weight:600;"></div></div>
                     <div class="data-row"><div class="data-label">Buyback Config:</div><div class="data-value" id="p-buybackConfig"></div></div>
                     <div class="data-row"><div class="data-label">Buyback Bill?:</div><div class="data-value" id="p-buybackBill"></div></div>
                 </div>
             </div>
         </div>
-        <div class="data-row"><div class="data-label">PO Amount:</div><div class="data-value" style="font-weight:700; color:#2563eb;" id="p-amount"></div></div>
+        <div class="data-row"><div class="data-label">PO Amount:</div><div class="data-value" style="font-weight:700; color:#1e4fd6;" id="p-amount"></div></div>
     </div>
 
     <!-- 3. Logistics & Dispatch -->
@@ -193,7 +193,7 @@
                 <div class="data-row"><div class="data-label">TAT Days:</div><div class="data-value" id="p-tatDays"></div></div>
             </div>
         </div>
-        <div class="data-row" style="margin-top: 10px;"><div class="data-label" style="color:#2563eb;">Last Remark:</div><div class="data-value" id="p-lastFollowupRemark" style="color:#2563eb; font-weight:600;"></div></div>
+        <div class="data-row" style="margin-top: 10px;"><div class="data-label" style="color:#1e4fd6;">Last Remark:</div><div class="data-value" id="p-lastFollowupRemark" style="color:#1e4fd6; font-weight:600;"></div></div>
     </div>
 
     <!-- 7. Followup / Remarks -->
@@ -238,8 +238,8 @@
         }
 
         const order = targetOrder["Sales Order"];
-        const products = targetOrder["Products"] || [];
-        const childItems = targetOrder["SalesChildTable"] || [];
+        const products = targetOrder["ProductsTable"] || [];
+        const childItems = targetOrder["DocumentsTable"] || [];
         const remarks = targetOrder["RemarksTable"] || [];
 
         const map = (id, val, prefix="") => {
@@ -250,7 +250,7 @@
         map('p-uid', order["UID"]);
         map('p-customer', order["Customer Name"]); map('p-contact', order["Contact Person"]);
         map('p-phone', order["Contact Details"]); map('p-email', order["Email"]);
-        map('p-type', order["Order Type to mention"]);
+        map('p-type', orderTypeLabel(order["Order Type to mention"]));
         map('p-rep', order["Sales Person Name"]); map('p-status', order["Status"]);
         
         map('p-amount', order["Price bifurcation / PO Amount"], "₹ ");
@@ -299,7 +299,7 @@
                     <td>${p["Capacity"] || '-'}</td>
                     <td>${p["Model"] || '-'}</td>
                     <td>${p["Make"] || '-'}</td>
-                    <td>${p["Warranty (Months)"] || '-'}</td>
+                    <td>${p["Warranty Mos"] || '-'}</td>
                     <td>${p["Warranty Clause"] || '-'}</td>
                     <td>${p["QTY"] || '-'}</td>
                     <td>${p["Rate"] || '-'}</td>

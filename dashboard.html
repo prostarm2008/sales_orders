@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="global.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <script src="utils.js"></script>
     <style>
         .main-content { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
@@ -18,7 +19,7 @@
         .tabs-header { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 24px; overflow-x: auto; scrollbar-width: thin; }
         .tab-btn { background: none; border: none; padding: 12px 24px; font-size: 14px; font-weight: 600; color: var(--text-muted); cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; white-space: nowrap; }
         .tab-btn:hover { color: var(--primary); background-color: #f8fafc; }
-        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); background-color: #eff6ff; }
+        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); background-color: #eaf0ff; }
         .tab-content { display: none; animation: fadeIn 0.3s ease-in-out; }
         .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
@@ -26,9 +27,9 @@
         .kpi-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 24px; }
         .kpi-card { background: var(--card-bg); padding: 24px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px -1px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 16px;}
         .kpi-icon { font-size: 24px; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;}
-        .kpi-icon.blue { background: #eff6ff; color: var(--primary); }
-        .kpi-icon.green { background: #ecfdf5; color: var(--success); }
-        .kpi-icon.orange { background: #fffbeb; color: var(--warning); }
+        .kpi-icon.blue { background: #eaf0ff; color: var(--primary); }
+        .kpi-icon.green { background: #eafbf0; color: var(--success); }
+        .kpi-icon.orange { background: #fff8e8; color: var(--warning); }
         .kpi-data h4 { margin: 0 0 4px 0; font-size: 13px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;}
         .kpi-data p { margin: 0; font-size: 24px; font-weight: 700; color: var(--text-main); }
 
@@ -44,9 +45,9 @@
         .card-blue::before { background: var(--primary); }
         .card-purple::before { background: #8b5cf6; } 
         .card-orange::before { background: var(--warning); } 
-        .card-icon { font-size: 32px; margin-bottom: 16px; display: inline-block; padding: 12px; background: #eff6ff; border-radius: 12px; color: var(--primary); align-self: flex-start;}
-        .card-purple .card-icon { background: #f5f3ff; color: #8b5cf6; }
-        .card-orange .card-icon { background: #fffbeb; color: var(--warning); }
+        .card-icon { font-size: 32px; margin-bottom: 16px; display: inline-block; padding: 12px; background: #eaf0ff; border-radius: 12px; color: var(--primary); align-self: flex-start;}
+        .card-purple .card-icon { background: #f3eeff; color: #8b5cf6; }
+        .card-orange .card-icon { background: #fff8e8; color: var(--warning); }
         .card h3 { margin: 0 0 12px 0; font-size: 20px; }
         .card p { margin: 0 0 24px 0; color: var(--text-muted); line-height: 1.5; font-size: 14px; flex-grow: 1;}
         .btn-action { display: inline-block; color: white; padding: 10px 20px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; pointer-events: none; align-self: flex-start;}
@@ -98,11 +99,32 @@
         .hidden { display: none !important; }
     </style>
 </head>
-<body>
+<body class="has-sidebar">
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">☰</button>
+<div class="sidebar-backdrop" onclick="toggleSidebar()"></div>
+<aside class="app-sidebar">
+    <div class="sidebar-brand">
+        <img src="Prostarm-logo.png" alt="Prostarm" onerror="this.outerHTML='<div style=\'font-weight:800; color:#1e4fd6; font-size:15px;\'>PROSTARM</div>';">
+    </div>
+    <nav class="sidebar-nav">
+        <div class="sidebar-section-label">Workspace</div>
+            <a href="Index.html" class="sidebar-link" data-roles="User,Manager"><span class="sidebar-icon">📝</span>Sales Order Entry</a>
+            <a href="dashboard.html" class="sidebar-link active" data-roles="User,Manager"><span class="sidebar-icon">📊</span>Dashboard</a>
+            <a href="manager-analytics-dashboard.html" class="sidebar-link" data-roles="Manager"><span class="sidebar-icon">📈</span>Manager Analytics</a>
+            <a href="grid-queue.html" class="sidebar-link" data-roles="Manager"><span class="sidebar-icon">🗂️</span>Grid Queue</a>
+            <a href="kanban-queue.html" class="sidebar-link" data-roles="Manager"><span class="sidebar-icon">🗃️</span>Kanban Board</a>
+            <a href="settings.html" class="sidebar-link" data-roles="Manager"><span class="sidebar-icon">⚙️</span>Settings</a>
+        <a href="#" class="sidebar-link sidebar-logout" onclick="logout(); return false;"><span class="sidebar-icon">🚪</span>Sign Out</a>
+    </nav>
+    <div class="sidebar-footer">
+        Prostarm CRM &middot; Power Redefined
+    </div>
+</aside>
+
 
 <div class="master-nav">
     <div class="brand-container">
-        <img src="Prostarm-logo.png" alt="Prostarm" onerror="this.outerHTML='<div style=\'font-weight:bold; color:#2563eb;\'>PR</div>';">
+        <img src="Prostarm-logo.png" alt="Prostarm" onerror="this.outerHTML='<div style=\'font-weight:bold; color:#1e4fd6;\'>PR</div>';">
         <h2 style="margin: 0; font-size: 20px; color: var(--primary);">Dashboard</h2>
     </div>
     <div class="master-nav-actions">
@@ -139,12 +161,32 @@
                 <div class="kpi-data"><h4>Total Orders</h4><p id="kpi-total">0</p></div>
             </div>
             <div class="kpi-card">
+                <div class="kpi-icon green">✅</div>
+                <div class="kpi-data"><h4>Approved</h4><p id="kpi-approved">0</p></div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background:#f3eeff; color:#7c3aed;">📝</div>
+                <div class="kpi-data"><h4>Pending Review</h4><p id="kpi-pending">0</p></div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background:#fdecec; color:#dc2626;">❌</div>
+                <div class="kpi-data"><h4>Rejected</h4><p id="kpi-rejected">0</p></div>
+            </div>
+			<div class="kpi-card">
                 <div class="kpi-icon orange">💰</div>
                 <div class="kpi-data"><h4>Pipeline Value</h4><p id="kpi-value">₹ 0.00</p></div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-icon green">✅</div>
-                <div class="kpi-data"><h4>Approved</h4><p id="kpi-approved">0</p></div>
+                <div class="kpi-icon" style="background:#eafbf0; color:#16a34a;">💵</div>
+                <div class="kpi-data"><h4>Approved Order Value</h4><p id="kpi-approved-value">₹ 0.00</p></div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background:#f3eeff; color:#7c3aed;">💵</div>
+                <div class="kpi-data"><h4>Pending Review Order Value</h4><p id="kpi-pending-value">₹ 0.00</p></div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background:#fdecec; color:#dc2626;">💵</div>
+                <div class="kpi-data"><h4>Rejected Order Value</h4><p id="kpi-rejected-value">₹ 0.00</p></div>
             </div>
         </div>
 
@@ -157,37 +199,31 @@
                 <h3>Revenue by Order Type</h3>
                 <div class="canvas-wrapper"><canvas id="revenueChart"></canvas></div>
             </div>
+            <div class="chart-card">
+                <h3>Top Sales Performers</h3>
+                <div class="canvas-wrapper"><canvas id="salesPersonChart"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <h3>Orders by Zone</h3>
+                <div class="canvas-wrapper"><canvas id="zoneChart"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <h3>Orders by Source</h3>
+                <div class="canvas-wrapper"><canvas id="sourceChart"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <h3>Monthly Order Trend</h3>
+                <div class="canvas-wrapper"><canvas id="trendChart"></canvas></div>
+            </div>
         </div>
     </div>
 
     <!-- TAB 2: QUICK VIEW & ACTIONS -->
     <div id="tab-quickview" class="main-tab-content tab-content">
-        <h3 class="section-title" style="margin-top: 0;">System Actions</h3>
-        <div class="card-container">
-            <div class="card card-blue" onclick="window.location.href='Index.html'">
-                <div class="card-icon">➕</div>
-                <h3>Create New Sales Order</h3>
-                <p>Draft and submit a new BOQ or Sales order directly to onboarding.</p>
-                <button class="btn-action">Start New Order →</button>
-            </div>
-            <div class="card card-purple" onclick="window.location.href='kanban-queue.html'">
-                <div class="card-icon">📋</div>
-                <h3>Onboarding Kanban</h3>
-                <p>Admin view: Drag and drop cards to update pipeline status.</p>
-                <button class="btn-action">Open Queue →</button>
-            </div>
-            <div class="card card-orange" onclick="window.location.href='grid-queue.html'">
-                <div class="card-icon">🗃️</div>
-                <h3>Master Grid Queue</h3>
-                <p>Admin view: Use a high-density table to rapidly update order statuses inline.</p>
-                <button class="btn-action">Open Grid →</button>
-            </div>
-        </div>
-
-        <h3 class="section-title">All Sales Orders Database</h3>
+        <h3 class="section-title" style="margin-top: 0;">All Sales Orders Database</h3>
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <input type="text" id="searchInput" class="search-box" placeholder="🔍 Search UID, Name, Status..." onkeyup="filterTable()">
-            <button class="btn" style="background-color: #10b981; color: white; padding: 10px 16px; font-size: 14px; border:none; border-radius:6px; cursor:pointer;" onclick="exportToExcel()">📥 Export All Details (Excel)</button>
+            <button class="btn" style="background-color: #16a34a; color: white; padding: 10px 16px; font-size: 14px; border:none; border-radius:6px; cursor:pointer;" onclick="exportToExcel()">📥 Export All Details (Excel)</button>
         </div>
 
         <div class="table-responsive">
@@ -223,7 +259,7 @@
             <button class="tab-btn v-tab-btn" onclick="openTab(event, 'v-tab-commercials', 'v-tab-content', 'v-tab-btn')">3. Commercials</button>
             <button class="tab-btn v-tab-btn" onclick="openTab(event, 'v-tab-products', 'v-tab-content', 'v-tab-btn')">4. Products</button>
             <button class="tab-btn v-tab-btn" onclick="openTab(event, 'v-tab-docs', 'v-tab-content', 'v-tab-btn')">5. Documents</button>
-            <button class="tab-btn v-tab-btn" onclick="openTab(event, 'v-tab-fulfillment', 'v-tab-content', 'v-tab-btn')" style="color:#10b981;">6. Fulfillment</button>
+            <button class="tab-btn v-tab-btn" onclick="openTab(event, 'v-tab-fulfillment', 'v-tab-content', 'v-tab-btn')" style="color:#16a34a;">6. Fulfillment</button>
         </div>
 
         <!-- VIEW: BASIC INFO -->
@@ -316,14 +352,14 @@
 
         <!-- VIEW: PRODUCTS -->
         <div id="v-tab-products" class="v-tab-content tab-content">
-            <h3 class="section-title" style="margin-top:0; color:#2563eb;">Product Line Items</h3>
+            <h3 class="section-title" style="margin-top:0; color:#1e4fd6;">Product Line Items</h3>
             <div class="table-responsive">
                 <table id="v-productTable" style="min-width: 1500px; box-shadow:none;">
                     <thead>
                         <tr style="background-color: #f1f5f9;">
                             <th style="width: 15%">Product name</th><th style="width: 10%">Capacity</th><th style="width: 10%">Model</th><th style="width: 10%">Make</th>
                             <th style="width: 6%">Wty(Mos)</th><th style="width: 8%">Clause</th><th style="width: 6%">QTY</th><th style="width: 8%">Rate</th>
-                            <th style="width: 7%">GST %</th><th style="background-color: #bfdbfe; width: 10%; color: #1e3a8a;">PO Amount</th><th style="background-color: #bfdbfe; width: 10%; color: #1e3a8a;">Total Amt</th>
+                            <th style="width: 7%">GST %</th><th style="background-color: #cbdaff; width: 10%; color: #122c73;">PO Amount</th><th style="background-color: #cbdaff; width: 10%; color: #122c73;">Total Amt</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -333,7 +369,7 @@
 
         <!-- VIEW: DOCUMENTS -->
         <div id="v-tab-docs" class="v-tab-content tab-content">
-            <h3 class="section-title" style="margin-top:0; color:#2563eb;">Documents Line Items</h3>
+            <h3 class="section-title" style="margin-top:0; color:#1e4fd6;">Documents Line Items</h3>
             <div class="table-responsive">
                 <table id="v-childTable" style="box-shadow:none;">
                     <thead><tr style="background-color: #f1f5f9;"><th>Document ID</th><th>Document Name</th><th>Attachment</th></tr></thead>
@@ -344,7 +380,7 @@
 
         <!-- VIEW: FULFILLMENT & TRACKING -->
         <div id="v-tab-fulfillment" class="v-tab-content tab-content">
-            <h3 class="section-title" style="margin-top:0; color:#10b981;">Fulfillment & Tracking</h3>
+            <h3 class="section-title" style="margin-top:0; color:#16a34a;">Fulfillment & Tracking</h3>
             
             <div class="form-grid">
                 <div class="form-group"><label>Broad Status</label><div id="v-broadStatus" class="view-data"></div></div>
@@ -360,7 +396,11 @@
                 <div class="form-group"><label>Invoice Date</label><div id="v-invoiceDate" class="view-data"></div></div>
                 <div class="form-group"><label>Basic Amount (Invoice)</label><div id="v-invoiceBasicAmount" class="view-data"></div></div>
                 <div class="form-group"><label>Invoice Amount (Total)</label><div id="v-invoiceAmount" class="view-data"></div></div>
+            </div>
+
+            <div class="form-grid">
                 <div class="form-group"><label>Billing Done ?</label><div id="v-billingDone" class="view-data"></div></div>
+                <div class="form-group"><label>ETA</label><div id="v-eta" class="view-data"></div></div>
             </div>
             
             <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 5px 0 25px 0;">
@@ -368,7 +408,6 @@
             <div class="form-grid">
                 <div class="form-group"><label>Bill Submission Status</label><div id="v-billSubmissionStatus" class="view-data"></div></div>
                 <div class="form-group"><label>Comp Certificate</label><div id="v-compCertificate" class="view-data"></div></div>
-                <div class="form-group"><label>ETA</label><div id="v-eta" class="view-data"></div></div>
                 <div class="form-group"><label>Product Serial Number</label><div id="v-productSerialNumber" class="view-data"></div></div>
             </div>
             
@@ -381,11 +420,11 @@
             
             <div class="form-grid">
                 <div class="form-group"><label>Status Age</label><div id="v-statusAge" class="view-data"></div></div>
-                <div class="form-group span-2"><label>Last Followup-Remark</label><div id="v-lastFollowupRemark" class="view-data" style="background:#eef2ff; border-color:#bfdbfe; color:#1e40af;"></div></div>
+                <div class="form-group span-2"><label>Last Followup-Remark</label><div id="v-lastFollowupRemark" class="view-data" style="background:#f3eeff; border-color:#cbdaff; color:#173e9e;"></div></div>
             </div>
 
             <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 5px 0 25px 0;">
-            <h3 class="section-title" style="color:#2563eb;">Followup / Remarks Line Items</h3>
+            <h3 class="section-title" style="color:#1e4fd6;">Followup / Remarks Line Items</h3>
             <div class="table-responsive">
                 <table id="v-remarkTable" style="box-shadow:none;">
                     <thead><tr style="background-color: #f1f5f9;"><th style="width: 15%">Date</th><th style="width: 25%">Remark By</th><th style="width: 60%">Remark Details</th></tr></thead>
@@ -409,7 +448,7 @@
             <button class="tab-btn m-tab-btn" onclick="openTab(event, 'm-tab-commercials', 'm-tab-content', 'm-tab-btn')">3. Commercials</button>
             <button class="tab-btn m-tab-btn" onclick="openTab(event, 'm-tab-products', 'm-tab-content', 'm-tab-btn')">4. Products</button>
             <button class="tab-btn m-tab-btn" onclick="openTab(event, 'm-tab-docs', 'm-tab-content', 'm-tab-btn')">5. Documents</button>
-            <button class="tab-btn m-tab-btn" onclick="openTab(event, 'm-tab-fulfillment', 'm-tab-content', 'm-tab-btn')" style="color:#10b981;">6. Fulfillment</button>
+            <button class="tab-btn m-tab-btn" onclick="openTab(event, 'm-tab-fulfillment', 'm-tab-content', 'm-tab-btn')" style="color:#16a34a;">6. Fulfillment</button>
         </div>
 
         <!-- EDIT: BASIC INFO -->
@@ -432,7 +471,7 @@
                 <div class="form-group"><label>PO Number</label><input type="text" id="m-poNumber"></div>
                 <div class="form-group"><label>PO Date</label><input type="date" id="m-poDate"></div>
                 <div class="form-group"><label>Order Type</label>
-                    <select id="m-orderType"><option value="Dealer">Dealer</option><option value="Retail">Retail</option><option value="SI">SI</option></select>
+                    <select id="m-orderType"><option value="Government">Government</option><option value="Private">Private</option></select>
                 </div>
                 
                 <div class="form-group"><label>Order Source</label>
@@ -599,14 +638,14 @@
 
         <!-- EDIT: PRODUCTS -->
         <div id="m-tab-products" class="m-tab-content tab-content">
-            <h3 class="section-title" style="margin-top:0; color:#2563eb;">Product Line Items</h3>
+            <h3 class="section-title" style="margin-top:0; color:#1e4fd6;">Product Line Items</h3>
             <div class="table-responsive">
                 <table id="m-productTable" style="min-width: 1500px; box-shadow:none;">
                     <thead>
                         <tr style="background-color: #f1f5f9;">
                             <th style="width: 15%">Product name</th><th style="width: 10%">Capacity</th><th style="width: 10%">Model</th><th style="width: 10%">Make</th>
                             <th style="width: 6%">Wty(Mos)</th><th style="width: 8%">Clause</th><th style="width: 6%">QTY</th><th style="width: 8%">Rate</th>
-                            <th style="width: 7%">GST %</th><th style="background-color: #bfdbfe; color: #1e3a8a; width: 10%;">PO Amount</th><th style="background-color: #bfdbfe; color: #1e3a8a; width: 10%;">Total Amt</th>
+                            <th style="width: 7%">GST %</th><th style="background-color: #cbdaff; color: #122c73; width: 10%;">PO Amount</th><th style="background-color: #cbdaff; color: #122c73; width: 10%;">Total Amt</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -617,7 +656,7 @@
 
         <!-- EDIT: DOCUMENTS -->
         <div id="m-tab-docs" class="m-tab-content tab-content">
-            <h3 class="section-title" style="margin-top:0; color:#2563eb;">Documents Line Items</h3>
+            <h3 class="section-title" style="margin-top:0; color:#1e4fd6;">Documents Line Items</h3>
             <div class="table-responsive">
                 <table id="m-childTable" style="min-width: 800px; box-shadow:none;">
                     <thead><tr style="background-color: #f1f5f9;"><th class="td-id">Document ID</th><th class="td-doc">Document Name</th><th class="td-file">Attachment</th></tr></thead>
@@ -629,7 +668,7 @@
 
         <!-- EDIT: FULFILLMENT & TRACKING -->
         <div id="m-tab-fulfillment" class="m-tab-content tab-content">
-            <h3 class="section-title" style="margin-top:0; color:#10b981;">Fulfillment & Tracking</h3>
+            <h3 class="section-title" style="margin-top:0; color:#16a34a;">Fulfillment & Tracking</h3>
             
             <div class="form-grid">
                 <div class="form-group">
@@ -674,7 +713,11 @@
                 <div class="form-group"><label>Invoice Date</label><input type="date" id="m-invoiceDate"></div>
                 <div class="form-group"><label>Basic Amount (Invoice)</label><input type="number" id="m-invoiceBasicAmount" step="0.01"></div>
                 <div class="form-group"><label>Invoice Amount (Total)</label><input type="number" id="m-invoiceAmount" step="0.01"></div>
+            </div>
+
+            <div class="form-grid">
                 <div class="form-group"><label>Billing Done ?</label><select id="m-billingDone"><option value="">Select...</option><option value="Yes">Yes</option><option value="No">No</option></select></div>
+                <div class="form-group"><label>ETA</label><input type="date" id="m-eta"></div>
             </div>
             
             <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 5px 0 25px 0;">
@@ -682,7 +725,6 @@
             <div class="form-grid">
                 <div class="form-group"><label>Bill Submission Status</label><select id="m-billSubmissionStatus"><option value="">Select...</option><option value="Submitted">Submitted</option><option value="In Process">In Process</option><option value="Pending">Pending</option></select></div>
                 <div class="form-group"><label>Comp Certificate</label><select id="m-compCertificate"><option value="">Select...</option><option value="Received">Received</option><option value="Pending">Pending</option><option value="In process">In process</option><option value="Pending due to Issues">Pending due to Issues</option></select></div>
-                <div class="form-group"><label>ETA</label><input type="date" id="m-eta"></div>
                 <div class="form-group"><label>Product Serial Number</label><input type="text" id="m-productSerialNumber"></div>
             </div>
             
@@ -695,11 +737,11 @@
             
             <div class="form-grid">
                 <div class="form-group"><label>Status Age</label><input type="text" id="m-statusAge" class="readonly" readonly placeholder="Auto"></div>
-                <div class="form-group span-2"><label>Last Followup-Remark</label><input type="text" id="m-lastFollowupRemark" class="readonly" readonly style="background:#eef2ff; border-color:#bfdbfe; color:#1e40af;"></div>
+                <div class="form-group span-2"><label>Last Followup-Remark</label><input type="text" id="m-lastFollowupRemark" class="readonly" readonly style="background:#f3eeff; border-color:#cbdaff; color:#173e9e;"></div>
             </div>
 
             <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 5px 0 25px 0;">
-            <h3 class="section-title" style="color:#2563eb;">Followup / Remarks Line Items</h3>
+            <h3 class="section-title" style="color:#1e4fd6;">Followup / Remarks Line Items</h3>
             <div class="table-responsive">
                 <table id="m-remarkTable" style="box-shadow:none;">
                     <thead><tr style="background-color: #f1f5f9;"><th style="width: 15%">Date</th><th style="width: 25%">Remark By</th><th style="width: 60%">Remark Details</th></tr></thead>
@@ -719,9 +761,89 @@
     let ordersData = [];
     let statusChartInstance = null;
     let revenueChartInstance = null;
+    let salesPersonChartInstance = null;
+    let zoneChartInstance = null;
+    let sourceChartInstance = null;
+    let trendChartInstance = null;
+
+    if (window.ChartDataLabels) Chart.register(ChartDataLabels);
+    Chart.defaults.set('plugins.datalabels', { display: false }); // opt-in per chart below
+
+    // Compact ₹ formatter for chart labels, e.g. 1234567 -> ₹12.3L
+    function formatCompactINR(val) {
+        if (val >= 10000000) return '₹' + (val / 10000000).toFixed(1).replace(/\.0$/, '') + 'Cr';
+        if (val >= 100000) return '₹' + (val / 100000).toFixed(1).replace(/\.0$/, '') + 'L';
+        if (val >= 1000) return '₹' + (val / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+        return '₹' + val.toLocaleString('en-IN');
+    }
 
     const powerAutomateViewUrl = "https://8549b42c711be8948675eefb5cf215.dd.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/05/workflows/b32de4d56db94337b471df29b82c38e2/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=RnRU6dAnci3wp9PMYaajaskcqd6aL0K9fn7-STxchIw"; 
     const powerAutomateUpdateUrl = "https://8549b42c711be8948675eefb5cf215.dd.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/23/workflows/939bec4d95ba4d5983187f8b75b034e0/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=B7UyGivjIHH-8dltPNOUXTz0Kj2mbXN-Tdqr2JE_sOo"; 
+
+    // Universal Utility to safely extract values even if columns are renamed
+    const getSafe = (obj, keys) => {
+        if (!obj) return "";
+        for (let k of keys) {
+            let foundKey = Object.keys(obj).find(ok => ok.replace(/[\s_()]/g, '').toLowerCase() === k.replace(/[\s_()]/g, '').toLowerCase());
+            if (foundKey && obj[foundKey] !== undefined && obj[foundKey] !== null && obj[foundKey] !== "") return obj[foundKey];
+        }
+        for (let k of keys) {
+            let foundKey = Object.keys(obj).find(ok => ok.replace(/[\s_()]/g, '').toLowerCase() === k.replace(/[\s_()]/g, '').toLowerCase());
+            if (foundKey && (obj[foundKey] === 0 || obj[foundKey] === "0")) return 0;
+        }
+        return "";
+    };
+
+    // Universal Array Finder - Fixes the DocumentsTable mismatch and unpacks Power Automate's {"value": []} wrapper
+    const extractDataArray = (orderObj, preferredKey, keywordTriggers) => {
+        if (!orderObj) return [];
+        let data = orderObj[preferredKey];
+        
+        if (!data) {
+            for (let k in orderObj) {
+                let cleanK = k.replace(/[\s_]/g, '').toLowerCase();
+                let cleanPref = preferredKey.replace(/[\s_]/g, '').toLowerCase();
+                
+                // Explicitly link code keys to your specific Excel Table Names
+                if (cleanK === cleanPref || 
+                   (cleanPref === "saleschildtable" && (cleanK === "documentstable" || cleanK === "documents")) ||
+                   (cleanPref === "products" && cleanK === "productstable") ||
+                   (cleanPref === "salesorder" && cleanK === "salesorderstable")) {
+                    data = orderObj[k]; break;
+                }
+            }
+        }
+
+        // Unpack stringified arrays from Power Automate
+        if (typeof data === 'string' && data.trim().startsWith('[')) {
+            try { data = JSON.parse(data); } catch(e) {}
+        }
+
+        // CRITICAL FIX: Unpack Power Automate's "value" wrapper for Excel Tables
+        if (data && typeof data === 'object' && !Array.isArray(data) && data.value && Array.isArray(data.value)) {
+            data = data.value;
+        }
+
+        if (Array.isArray(data) && data.length > 0) return data;
+
+        // Deep search fallback
+        for (let k in orderObj) {
+            let val = orderObj[k];
+            if (typeof val === 'string' && val.trim().startsWith('[')) {
+                try { val = JSON.parse(val); } catch(e) {}
+            }
+            if (val && typeof val === 'object' && !Array.isArray(val) && val.value && Array.isArray(val.value)) {
+                val = val.value;
+            }
+            if (Array.isArray(val) && val.length > 0) {
+                let keys = Object.keys(val[0]).map(x => String(x).toLowerCase());
+                if (keywordTriggers.some(trigger => keys.some(key => key.includes(trigger)))) {
+                    return val;
+                }
+            }
+        }
+        return [];
+    };
 
     async function initCloudFetch() {
         if (!powerAutomateViewUrl) {
@@ -743,20 +865,12 @@
             }
 
             const bodyText = await response.text();
-            if (!bodyText.trim()) {
-                throw new Error('EMPTY_BODY');
-            }
+            if (!bodyText.trim()) throw new Error('EMPTY_BODY');
 
             let data;
-            try {
-                data = JSON.parse(bodyText);
-            } catch (parseErr) {
-                throw new Error(`Flow returned non-JSON content: ${bodyText.slice(0, 200)}`);
-            }
+            try { data = JSON.parse(bodyText); } catch (parseErr) { throw new Error(`Flow returned non-JSON content: ${bodyText.slice(0, 200)}`); }
 
             ordersData = Array.isArray(data) ? data : (data.value || []);
-            window.__lastCloudFetch = data; // debug: inspect via console -> window.__lastCloudFetch
-            console.log("Raw cloud response (first item):", ordersData[0]);
             localStorage.setItem('crmOrders', JSON.stringify(ordersData)); 
             
             hideSyncBanner();
@@ -773,8 +887,6 @@
         const banner = document.getElementById('syncBanner');
         const detail = document.getElementById('syncDetail');
         if (!banner) return;
-        // "Failed to fetch" with no HTTP status almost always means the browser blocked the
-        // request before it got an HTTP response at all — i.e. CORS, not a real network outage.
         const msg = err.message || String(err);
         const isLikelyCors = err instanceof TypeError || /Failed to fetch|NetworkError|Load failed/i.test(msg);
         const isEmptyBody = msg === 'EMPTY_BODY';
@@ -792,8 +904,6 @@
         const banner = document.getElementById('syncBanner');
         if (banner) banner.classList.remove('show');
     }
-
-    const logout = () => { sessionStorage.clear(); window.location.href = 'login.html'; };
 
     function mUpdateZone() {
         const stateSelect = document.getElementById("m-state");
@@ -834,55 +944,88 @@
     const updateFileName = (input) => {
         const span = input.closest('.custom-file-upload').querySelector('.file-name-display');
         span.textContent = input.files.length > 0 ? input.files[0].name : "No file chosen";
-        span.style.color = input.files.length > 0 ? '#2563eb' : '#64748b';
+        span.style.color = input.files.length > 0 ? '#1e4fd6' : '#64748b';
         span.style.fontWeight = input.files.length > 0 ? '600' : '400';
     };
 
     const getStatusStyles = (status) => {
-        if(status === "Approved") return { bg: "#dcfce7", color: "#166534" };
-        if(status === "Rejected") return { bg: "#fee2e2", color: "#991b1b" };
-        return { bg: "#dbeafe", color: "#1e40af" }; 
+        if(status === "Approved") return { bg: "#dcf7e3", color: "#15803d" };
+        if(status === "Rejected") return { bg: "#fbd9d9", color: "#9f1d1d" };
+        return { bg: "#e4eaff", color: "#173e9e" }; 
     };
 
-    function closeModal(modalId) {
-        document.getElementById(modalId).style.display = 'none';
-    }
+    function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
 
     window.onload = function() {
         const rawUser = sessionStorage.getItem('loggedInUser');
         if (!rawUser) { window.location.href = 'login.html'; return; }
-        
-        const formattedUser = formatName(rawUser);
-        document.getElementById('greeting').innerText = `Welcome, ${formattedUser}`;
-        document.getElementById('header-name').innerText = `Hello, ${formattedUser.split(' ')[0]}`;
+        if (!enforcePageAccess()) return;
+        applySidebarAccess();
+
+        document.getElementById('greeting').innerText = `Welcome, ${rawUser}`;
+        document.getElementById('header-name').innerText = `Hello, ${rawUser.split(' ')[0]}`;
 
         initCloudFetch();
     };
 
     function loadDashboardData() {
-        let totalValue = 0, approvedCount = 0;
+        let totalValue = 0, approvedCount = 0, pendingCount = 0, rejectedCount = 0;
+        let approvedValue = 0, pendingValue = 0, rejectedValue = 0;
         const statusCounts = { 'Draft': 0, 'Submitted': 0, 'Approved': 0, 'Rejected': 0 };
-        const typeRevenue = { 'Dealer': 0, 'Retail': 0, 'SI': 0, 'Other': 0 };
+        const typeRevenue = { 'Government': 0, 'Private': 0 };
+        const salesPersonCounts = {};
+        const zoneCounts = {};
+        const sourceCounts = {};
+        const monthCounts = {};
 
         ordersData.forEach(order => {
             if(!order || !order["Sales Order"]) return;
             const header = order["Sales Order"];
             const status = header["Status"] || "Submitted";
             const amount = parseFloat(header["Price bifurcation / PO Amount"]) || 0;
-            const type = header["Order Type to mention"] || "Other";
+            const type = orderTypeLabel(header["Order Type to mention"]) || "Other";
 
             if(statusCounts[status] !== undefined) statusCounts[status]++;
-            if(status === "Approved") approvedCount++;
+            if(status === "Approved") { approvedCount++; approvedValue += amount; }
+            if(status === "Submitted") { pendingCount++; pendingValue += amount; }
+            if(status === "Rejected") { rejectedCount++; rejectedValue += amount; }
             totalValue += amount;
             if(typeRevenue[type] !== undefined) typeRevenue[type] += amount; else typeRevenue['Other'] += amount;
+
+            const salesPerson = (header["Sales Person Name"] || "Unassigned").trim() || "Unassigned";
+            salesPersonCounts[salesPerson] = (salesPersonCounts[salesPerson] || 0) + 1;
+
+            const zone = header["Zone"] || "Unspecified";
+            zoneCounts[zone] = (zoneCounts[zone] || 0) + 1;
+
+            const source = header["Order Source"] || "Unspecified";
+            sourceCounts[source] = (sourceCounts[source] || 0) + 1;
+
+            const poDate = header["PO Date"];
+            if (poDate) {
+                const d = new Date(formatExcelDate(poDate));
+                if (!isNaN(d)) {
+                    const key = d.toLocaleString('en-IN', { month: 'short', year: 'numeric' });
+                    monthCounts[key] = { count: (monthCounts[key]?.count || 0) + 1, sortKey: d.getFullYear() * 12 + d.getMonth() };
+                }
+            }
         });
 
         document.getElementById('kpi-total').innerText = ordersData.length;
         document.getElementById('kpi-approved').innerText = approvedCount;
+        document.getElementById('kpi-pending').innerText = pendingCount;
+        document.getElementById('kpi-rejected').innerText = rejectedCount;
         document.getElementById('kpi-value').innerText = `₹ ${totalValue.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+        document.getElementById('kpi-approved-value').innerText = `₹ ${approvedValue.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+        document.getElementById('kpi-pending-value').innerText = `₹ ${pendingValue.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+        document.getElementById('kpi-rejected-value').innerText = `₹ ${rejectedValue.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
 
         renderStatusChart(statusCounts); 
         renderRevenueChart(typeRevenue);
+        renderSalesPersonChart(salesPersonCounts);
+        renderZoneChart(zoneCounts);
+        renderSourceChart(sourceCounts);
+        renderTrendChart(monthCounts);
     }
 
     function renderStatusChart(data) {
@@ -891,8 +1034,20 @@
         if(Object.values(data).reduce((a, b) => a + b, 0) === 0) data = { 'No Data': 1 };
         statusChartInstance = new Chart(ctx, {
             type: 'doughnut',
-            data: { labels: Object.keys(data), datasets: [{ data: Object.values(data), backgroundColor: ['#94a3b8', '#3b82f6', '#10b981', '#ef4444', '#e2e8f0'], borderWidth: 0, hoverOffset: 4 }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 8, font: { family: 'Inter' } } } }, cutout: '70%' }
+            data: { labels: Object.keys(data), datasets: [{ data: Object.values(data), backgroundColor: ['#94a3b8', '#3b82f6', '#16a34a', '#dc2626', '#e2e8f0'], borderWidth: 0, hoverOffset: 4 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: {
+                legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 8, font: { family: 'Inter' } } },
+                datalabels: {
+                    display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0 && ctx.chart.data.labels[ctx.dataIndex] !== 'No Data',
+                    color: '#fff', font: { family: 'Inter', weight: '700', size: 12 },
+                    formatter: (val, ctx) => {
+                        const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                        const pct = total ? Math.round((val / total) * 100) : 0;
+                        return `${val}\n${pct}%`;
+                    },
+                    textAlign: 'center'
+                }
+            }, cutout: '70%' }
         });
     }
 
@@ -903,7 +1058,100 @@
         revenueChartInstance = new Chart(ctx, {
             type: 'bar',
             data: { labels: Object.keys(data), datasets: [{ label: 'Revenue (₹)', data: Object.values(data), backgroundColor: '#8b5cf6', borderRadius: 4 }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { borderDash: [4, 4], color: '#e2e8f0' }, ticks: { font: { family: 'Inter' }, callback: val => `₹${val}` } }, x: { grid: { display: false }, ticks: { font: { family: 'Inter' } } } } }
+            options: { responsive: true, maintainAspectRatio: false, layout: { padding: { top: 22 } }, plugins: {
+                legend: { display: false },
+                datalabels: {
+                    display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
+                    anchor: 'end', align: 'end', offset: 4,
+                    color: '#4c1d95', font: { family: 'Inter', weight: '700', size: 12 },
+                    formatter: (val) => formatCompactINR(val)
+                }
+            }, scales: { y: { beginAtZero: true, grid: { borderDash: [4, 4], color: '#e2e8f0' }, ticks: { font: { family: 'Inter' }, callback: val => `₹${val}` } }, x: { grid: { display: false }, ticks: { font: { family: 'Inter' } } } } }
+        });
+    }
+
+    function renderSalesPersonChart(data) {
+        const ctx = document.getElementById('salesPersonChart').getContext('2d');
+        if (salesPersonChartInstance) salesPersonChartInstance.destroy();
+        let entries = Object.entries(data).sort((a, b) => b[1] - a[1]).slice(0, 8);
+        if (entries.length === 0) entries = [['No Data', 0]];
+        salesPersonChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: { labels: entries.map(e => e[0]), datasets: [{ label: 'Orders', data: entries.map(e => e[1]), backgroundColor: '#1e4fd6', borderRadius: 4 }] },
+            options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, layout: { padding: { right: 24 } }, plugins: {
+                legend: { display: false },
+                datalabels: {
+                    display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
+                    anchor: 'end', align: 'end', offset: 4,
+                    color: '#122c73', font: { family: 'Inter', weight: '700', size: 12 },
+                    formatter: (val) => val
+                }
+            }, scales: { x: { beginAtZero: true, ticks: { precision: 0 }, grid: { borderDash: [4, 4], color: '#e2e8f0' } }, y: { grid: { display: false } } } }
+        });
+    }
+
+    function renderZoneChart(data) {
+        const ctx = document.getElementById('zoneChart').getContext('2d');
+        if (zoneChartInstance) zoneChartInstance.destroy();
+        let labels = Object.keys(data), values = Object.values(data);
+        if (labels.length === 0) { labels = ['No Data']; values = [1]; }
+        zoneChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: { labels, datasets: [{ label: 'Orders', data: values, backgroundColor: '#16a34a', borderRadius: 4 }] },
+            options: { responsive: true, maintainAspectRatio: false, layout: { padding: { top: 22 } }, plugins: {
+                legend: { display: false },
+                datalabels: {
+                    display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0 && labels[0] !== 'No Data',
+                    anchor: 'end', align: 'end', offset: 4,
+                    color: '#065f46', font: { family: 'Inter', weight: '700', size: 12 },
+                    formatter: (val) => val
+                }
+            }, scales: { y: { beginAtZero: true, ticks: { precision: 0 }, grid: { borderDash: [4, 4], color: '#e2e8f0' } }, x: { grid: { display: false } } } }
+        });
+    }
+
+    function renderSourceChart(data) {
+        const ctx = document.getElementById('sourceChart').getContext('2d');
+        if (sourceChartInstance) sourceChartInstance.destroy();
+        let labels = Object.keys(data), values = Object.values(data);
+        if (labels.length === 0) { labels = ['No Data']; values = [1]; }
+        sourceChartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: { labels, datasets: [{ data: values, backgroundColor: ['#1e4fd6', '#7c3aed', '#8b5cf6', '#f59e0b', '#16a34a', '#dc2626', '#0ea5e9', '#ec4899', '#94a3b8'], borderWidth: 0, hoverOffset: 4 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: {
+                legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 8, font: { family: 'Inter', size: 11 } } },
+                datalabels: {
+                    display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0 && labels[0] !== 'No Data',
+                    color: '#fff', font: { family: 'Inter', weight: '700', size: 12 },
+                    formatter: (val, ctx) => {
+                        const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                        const pct = total ? Math.round((val / total) * 100) : 0;
+                        return `${val}\n${pct}%`;
+                    },
+                    textAlign: 'center'
+                }
+            }, cutout: '65%' }
+        });
+    }
+
+    function renderTrendChart(monthData) {
+        const ctx = document.getElementById('trendChart').getContext('2d');
+        if (trendChartInstance) trendChartInstance.destroy();
+        const entries = Object.entries(monthData).sort((a, b) => a[1].sortKey - b[1].sortKey);
+        let labels = entries.map(e => e[0]), values = entries.map(e => e[1].count);
+        if (labels.length === 0) { labels = ['No Data']; values = [0]; }
+        trendChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: { labels, datasets: [{ label: 'Orders', data: values, borderColor: '#1e4fd6', backgroundColor: 'rgba(37,99,235,0.1)', fill: true, tension: 0.35, pointBackgroundColor: '#1e4fd6', pointRadius: 4 }] },
+            options: { responsive: true, maintainAspectRatio: false, layout: { padding: { top: 22 } }, plugins: {
+                legend: { display: false },
+                datalabels: {
+                    display: labels[0] !== 'No Data',
+                    anchor: 'end', align: 'top', offset: 6,
+                    color: '#173e9e', font: { family: 'Inter', weight: '700', size: 12 },
+                    formatter: (val) => val
+                }
+            }, scales: { y: { beginAtZero: true, ticks: { precision: 0 }, grid: { borderDash: [4, 4], color: '#e2e8f0' } }, x: { grid: { display: false } } } }
         });
     }
 
@@ -935,7 +1183,7 @@
             tableHtml += `<tr>
                 <td><strong>${header["UID"] || 'N/A'}</strong></td>
                 <td>${header["Customer Name"] || ''}</td>
-                <td>${header["Order Type to mention"] || ''}</td>
+                <td>${orderTypeLabel(header["Order Type to mention"]) || ''}</td>
                 <td>₹ ${header["Price bifurcation / PO Amount"] || '0.00'}</td>
                 <td><span class="status-badge" style="background:${styles.bg}; color:${styles.color};">${header["Status"] || 'Draft'}</span></td>
                 <td>${actionsHtml}</td>
@@ -957,9 +1205,12 @@
     }
 
     function exportToExcel() {
-        if (!ordersData || ordersData.length === 0) { alert("No data available to export!"); return; }
-        
-        let csvRows = [[
+        if (!ordersData || ordersData.length === 0) { 
+            alert("No data available to export!"); 
+            return; 
+        }
+
+        const headers = [
             "UID", "Sales Person Name", "Customer Name", "Contact Person", "Contact Details", "Email", 
             "PO Number", "PO Date", "Order Source", "Segments", "FY", "ProstarM Branch", "Order Type", 
             "Bill To GST", "Ship To GST", "Installation Scope", "Retention/BG", "% BG Retention", 
@@ -971,64 +1222,99 @@
             "Billing Address", "Delivery Address", "Installation Address", "Pin Code", 
             "Product ID", "Product Name", "Capacity", "Model", "Make", "Warranty (Mos)", "Warranty Clause", "QTY", "Rate", "GST %", "Product Basic Amount", "Product Total Amount", 
             "All Documents (Merged)", "All Remarks (Merged)"
-        ].join(",")];
+        ];
+
+        let csvRows = [headers.join(",")];
 
         ordersData.forEach(rowArray => {
-            let order = rowArray["Sales Order"];
-            let products = rowArray["Products"] || [{}];
-            let docs = rowArray["SalesChildTable"] || [];
-            let remarks = rowArray["RemarksTable"] || [];
+            let order = rowArray["Sales Order"] || {};
             
-            if(order) {
-                let docString = docs.map(d => `${d["Document Name"] || "Unnamed"} (ID: ${d["Document ID"] || d["Product ID"] || "No-ID"} | Attached: ${(d["Attachment"] && d["Attachment"] !== "None") ? "Yes" : "No"})`).join(" ; ");
-                let remString = remarks.map(r => `[${r["Date"] || "-"}] ${r["Remark By"] || "-"}: ${r["Remark"] || "-"}`).join(" ; ");
+            let products = extractDataArray(rowArray, "ProductsTable", ["product name", "capacity", "qty", "make"]);
+            if (products.length === 0) products = [{}];
 
-                let lastRemarkStr = "";
-                if (remarks.length > 0) {
-                    let lastObj = remarks[remarks.length - 1];
-                    lastRemarkStr = `[${lastObj["Date"] || '-'}] ${lastObj["Remark By"] || '-'}: ${lastObj["Remark"] || '-'}`;
-                }
+            let docs = extractDataArray(rowArray, "DocumentsTable", ["document", "attachment"]);
+            let remarks = extractDataArray(rowArray, "RemarksTable", ["remark", "date"]);
 
-                products.forEach(p => {
-                    let row = [
-                        order["UID"] || "", order["Sales Person Name"] || "", order["Customer Name"] || "", order["Contact Person"] || "", order["Contact Details"] || "", order["Email"] || "", 
-                        order["PO Number"] || "", order["PO Date"] || "", order["Order Source"] || "", order["Segments"] || "", order["FY"] || "", order["ProstarM Branch"] || "", order["Order Type to mention"] || "", 
-                        order["Bill to GST Number"] || order["GST Number"] || "", order["Ship to GST Number"] || "", order["Installation Scope"] || "", order["Retension / BG/Not required"] || "", order["% Of BG Retension"] || "",
-                        order["Buyback Status"] || order["Buyback (Y/N)"] || "", order["Buyback Configuration"] || "", order["Buyback Amount"] || "", order["Buyback Bill ?"] || "", order["Price bifurcation / PO Amount"] || "", 
-                        order["AMC Mentioned In PO"] || "", order["AMC Duration (Year)"] || "", order["PM Required during warranty period"] || "", order["Payments Terms"] || "", order["Payment Status"] || "",
-                        order["Broad Status"] || "", order["Work Status"] || "", order["Delivery Date"] || "", order["Installation Date"] || "", order["Invoice Number"] || "", order["Invoice Date"] || "", order["Basic Amount"] || "", order["Invoice Amount"] || "", order["Billing Done ?"] || "",
-                        order["Bill Submision Status"] || "", order["Comp Certificate"] || "", order["ETA"] || "", order["Product Serial Number"] || "", order["Engineer Name"] || "", order["Material Received Date"] || "", order["Ageing"] || "", order["TAT Days"] || "", order["Status Age"] || lastRemarkStr,
-                        order["Dispatch Type"] || "", order["Pickup Location"] || "", order["To be Completed On"] || "", order["Region /Zonal Office"] || "", order["State"] || "", order["Zone"] || "", order["Location"] || "", 
-                        order["Billing Address"] || "", order["Delivery Address"] || "", order["Installation Address"] || "", order["Pin code"] || "",
-                        p["Product ID"] || "", p["Product Name"] || "", p["Capacity"] || "", p["Model"] || "", p["Make"] || "", p["Warranty (Months)"] || "", p["Warranty Clause"] || "", p["QTY"] || "", p["Rate"] || "", p["GST %"] || "", p["PO Amount"] || "", p["Total Amount"] || "", 
-                        docString, remString
-                    ];
-                    csvRows.push(row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(","));
-                });
+            let docString = docs.length > 0 
+                ? docs.map(d => {
+                    let isAttached = "No";
+                    let att = getSafe(d, ["Attachment"]);
+                    if (att) {
+                        if (typeof att === 'object' && att.name) isAttached = "Yes";
+                        else if (typeof att === 'string' && att.trim() !== "None") isAttached = "Yes";
+                    }
+                    return `${getSafe(d, ["Document Name"]) || "Unnamed Document"} (Attached: ${isAttached})`;
+                }).join(" | ") 
+                : "No Documents";
+
+            let remString = remarks.length > 0 
+                ? remarks.map(r => `[${formatExcelDate(getSafe(r, ["Date"]))}] ${getSafe(r, ["Remark By"]) || "User"}: ${getSafe(r, ["Remark"]) || ""}`).join(" | ") 
+                : "No Remarks";
+
+            let lastRemarkStr = "No Remarks";
+            if (remarks.length > 0) {
+                let lastObj = remarks[remarks.length - 1];
+                lastRemarkStr = `[${formatExcelDate(getSafe(lastObj, ["Date"]))}] ${getSafe(lastObj, ["Remark By"]) || 'User'}: ${getSafe(lastObj, ["Remark"]) || ''}`;
             }
+
+            products.forEach(p => {
+                let isProductEmpty = Object.keys(p).length === 0;
+
+                let pQty = isProductEmpty ? "" : (parseFloat(getSafe(p, ["QTY", "Quantity"])) || 1);
+                let pRate = isProductEmpty ? "" : (parseFloat(getSafe(p, ["Rate"])) || 0);
+                let pGst = isProductEmpty ? "" : (parseFloat(getSafe(p, ["GST %", "GST", "GSTPercent"])) || 0);
+                
+                let pBasic = isProductEmpty ? "" : (parseFloat(getSafe(p, ["PO Amount", "Product Basic Amount", "Basic Amount"])) || (pQty * pRate));
+                let pTotal = isProductEmpty ? "" : (parseFloat(getSafe(p, ["Total Amount", "Product Total Amount", "Total Amount."])) || (pBasic + (pBasic * (pGst / 100))));
+
+                let row = [
+                    order["UID"], order["Sales Person Name"], order["Customer Name"], order["Contact Person"], order["Contact Details"], order["Email"], 
+                    order["PO Number"], formatExcelDate(order["PO Date"]), order["Order Source"], order["Segments"], order["FY"], order["ProstarM Branch"], orderTypeLabel(order["Order Type to mention"]), 
+                    order["Bill to GST Number"] || order["GST Number"], order["Ship to GST Number"], order["Installation Scope"], order["Retension / BG/Not required"], order["% Of BG Retension"],
+                    order["Buyback Status"] || order["Buyback (Y/N)"], order["Buyback Configuration"], order["Buyback Amount"], order["Buyback Bill ?"], order["Price bifurcation / PO Amount"], 
+                    order["AMC Mentioned In PO"], order["AMC Duration (Year)"], order["PM Required during warranty period"], order["Payments Terms"], order["Payment Status"],
+                    order["Broad Status"], order["Work Status"], formatExcelDate(order["Delivery Date"]), formatExcelDate(order["Installation Date"]), order["Invoice Number"], formatExcelDate(order["Invoice Date"]), order["Basic Amount"], order["Invoice Amount"], order["Billing Done ?"],
+                    order["Bill Submision Status"], order["Comp Certificate"], formatExcelDate(order["ETA"]), order["Product Serial Number"], order["Engineer Name"], formatExcelDate(order["Material Received Date"]), order["Ageing"], order["TAT Days"], 
+                    order["Status Age"], lastRemarkStr,
+                    order["Dispatch Type"], order["Pickup Location"], formatExcelDate(order["To be Completed On"]), order["Region /Zonal Office"], order["State"], order["Zone"], order["Location"], 
+                    order["Billing Address"], order["Delivery Address"], order["Installation Address"], order["Pin code"],
+                    
+                    getSafe(p, ["Product ID"]), getSafe(p, ["Product Name"]), getSafe(p, ["Capacity"]), getSafe(p, ["Model"]), getSafe(p, ["Make"]), getSafe(p, ["Warranty (Months)", "Warranty (Mos)", "Warranty Mos", "WTY(MOS)"]), getSafe(p, ["Warranty Clause", "Clause"]), 
+                    pQty, pRate, pGst, isProductEmpty ? "" : Number(pBasic).toFixed(2), isProductEmpty ? "" : Number(pTotal).toFixed(2), 
+                    
+                    docString, remString
+                ];
+                
+                csvRows.push(row.map(field => {
+                    let cleanStr = (field !== undefined && field !== null && field !== "NaN") ? String(field) : "";
+                    cleanStr = cleanStr.replace(/\r?\n|\r/g, ' ').replace(/"/g, '""');
+                    return `"${cleanStr}"`;
+                }).join(","));
+            });
         });
 
+        const blob = new Blob(["\uFEFF" + csvRows.join("\n")], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
-        link.href = URL.createObjectURL(new Blob(["\uFEFF" + csvRows.join("\n")], { type: 'text/csv;charset=utf-8;' }));
-        link.download = "Sales_Orders_Export.csv";
+        link.href = URL.createObjectURL(blob);
+        link.download = `Sales_Orders_Export_${new Date().toISOString().split('T')[0]}.csv`;
         link.click();
     }
 
     function openViewModal(index) {
-        const order = ordersData[index]["Sales Order"];
-        const products = ordersData[index]["Products"] || [];
-        const childItems = ordersData[index]["SalesChildTable"] || [];
-        const remarks = ordersData[index]["RemarksTable"] || [];
+        const order = ordersData[index]["Sales Order"] || {};
+        const products = extractDataArray(ordersData[index], "ProductsTable", ["product name", "capacity", "qty", "make"]);
+        const childItems = extractDataArray(ordersData[index], "DocumentsTable", ["document", "attachment"]);
+        const remarks = extractDataArray(ordersData[index], "RemarksTable", ["remark", "date"]);
         
         const map = (id, val, prefix="") => {
             const el = document.getElementById(id);
-            if(el) el.innerText = (val) ? prefix + val : "-";
+            if(el) el.innerText = (val !== undefined && val !== null && val !== "") ? prefix + val : "-";
         };
         
         map('v-uid', order["UID"]); map('v-salesPerson', order["Sales Person Name"]); map('v-status', order["Status"]);
         map('v-customerName', order["Customer Name"]); map('v-contactPerson', order["Contact Person"]); map('v-contactDetails', order["Contact Details"]); map('v-email', order["Email"]);
         
-        map('v-poNumber', order["PO Number"]); map('v-poDate', order["PO Date"]); map('v-orderType', order["Order Type to mention"]);
+        map('v-poNumber', order["PO Number"]); map('v-poDate', formatExcelDate(order["PO Date"])); map('v-orderType', orderTypeLabel(order["Order Type to mention"]));
         map('v-orderSource', order["Order Source"]); map('v-segment', order["Segments"]); map('v-fy', order["FY"]); map('v-prostarmBranch', order["ProstarM Branch"]);
 
         map('v-poAmount', order["Price bifurcation / PO Amount"], "₹ "); map('v-installScope', order["Installation Scope"]);
@@ -1040,60 +1326,91 @@
         map('v-boq', order["BOQ / Product details"]); map('v-billing', order["Billing Address"]); map('v-delivery', order["Delivery Address"]); map('v-installAdd', order["Installation Address"]);
         map('v-location', order["Location"]); map('v-pin', order["Pin code"]); map('v-dispatch', order["Dispatch Type"]); map('v-pickup', order["Pickup Location"]); 
         
-        map('v-toBeCompletedOn', order["To be Completed On"]); map('v-regionZoneOffice', order["Region /Zonal Office"]); map('v-state', order["State"]); map('v-zone', order["Zone"]);
+        map('v-toBeCompletedOn', formatExcelDate(order["To be Completed On"])); map('v-regionZoneOffice', order["Region /Zonal Office"]); map('v-state', order["State"]); map('v-zone', order["Zone"]);
         
         map('v-billToGst', order["Bill to GST Number"] || order["GST Number"]); map('v-shipToGst', order["Ship to GST Number"]);
 
-        map('v-broadStatus', order["Broad Status"]); map('v-workStatus', order["Work Status"]); map('v-deliveryDate', order["Delivery Date"]); map('v-installationDate', order["Installation Date"]);
-        map('v-invoiceNumber', order["Invoice Number"]); map('v-invoiceDate', order["Invoice Date"]); map('v-invoiceBasicAmount', order["Basic Amount"], "₹ "); map('v-invoiceAmount', order["Invoice Amount"], "₹ "); map('v-billingDone', order["Billing Done ?"]);
+        map('v-broadStatus', order["Broad Status"]); map('v-workStatus', order["Work Status"]); map('v-deliveryDate', formatExcelDate(order["Delivery Date"])); map('v-installationDate', formatExcelDate(order["Installation Date"]));
+        map('v-invoiceNumber', order["Invoice Number"]); map('v-invoiceDate', formatExcelDate(order["Invoice Date"])); map('v-invoiceBasicAmount', order["Basic Amount"], "₹ "); map('v-invoiceAmount', order["Invoice Amount"], "₹ "); map('v-billingDone', order["Billing Done ?"]);
 
-        map('v-billSubmissionStatus', order["Bill Submision Status"]); map('v-compCertificate', order["Comp Certificate"]); map('v-eta', order["ETA"]); map('v-productSerialNumber', order["Product Serial Number"]);
-        map('v-engineerName', order["Engineer Name"]); map('v-materialReceivedDate', order["Material Received Date"]); map('v-ageing', order["Ageing"]); map('v-tatDays', order["TAT Days"]);
+        map('v-billSubmissionStatus', order["Bill Submision Status"]); map('v-compCertificate', order["Comp Certificate"]); map('v-eta', formatExcelDate(order["ETA"])); map('v-productSerialNumber', order["Product Serial Number"]);
+        map('v-engineerName', order["Engineer Name"]); map('v-materialReceivedDate', formatExcelDate(order["Material Received Date"])); map('v-ageing', order["Ageing"]); map('v-tatDays', order["TAT Days"]);
         map('v-statusAge', order["Status Age"]); 
 
         let lastRemarkStr = "";
         if (remarks.length > 0) {
             let lastObj = remarks[remarks.length - 1];
-            lastRemarkStr = `[${lastObj["Date"] || '-'}] ${lastObj["Remark By"] || '-'}: ${lastObj["Remark"] || '-'}`;
+            lastRemarkStr = `[${formatExcelDate(getSafe(lastObj, ["Date"]))}] ${getSafe(lastObj, ["Remark By"]) || '-'}: ${getSafe(lastObj, ["Remark"]) || '-'}`;
         }
         map('v-lastFollowupRemark', lastRemarkStr);
 
         document.querySelector('#viewModal .v-tab-btn').click();
 
         let pHtml = "";
-        if (!products.length) pHtml = '<tr><td colspan="11" style="text-align:center; color:#64748b; padding:20px;">No products added.</td></tr>';
-        else products.forEach(p => { if(p) pHtml += `<tr><td>${p["Product Name"] || '-'}</td><td>${p["Capacity"] || '-'}</td><td>${p["Model"] || '-'}</td><td>${p["Make"] || '-'}</td><td>${p["Warranty (Months)"] || '-'}</td><td>${p["Warranty Clause"] || '-'}</td><td>${p["QTY"] || '-'}</td><td>${p["Rate"] || '-'}</td><td>${p["GST %"] || '0'}%</td><td>${p["PO Amount"] || '-'}</td><td>${p["Total Amount"] || '-'}</td></tr>`; });
+        if (products.length === 0) {
+            pHtml = '<tr><td colspan="11" style="text-align:center; color:#64748b; padding:20px;">No products added.</td></tr>';
+        } else {
+            products.forEach(p => { 
+                let wty = getSafe(p, ["Warranty (Months)", "Warranty (Mos)", "Warranty Mos", "WTY(MOS)"]);
+                let clause = getSafe(p, ["Warranty Clause", "Clause"]);
+                let qty = getSafe(p, ["QTY", "Quantity"]);
+                let rate = getSafe(p, ["Rate"]);
+                let gst = getSafe(p, ["GST %", "GST", "GSTPercent"]);
+                let basic = getSafe(p, ["PO Amount", "Product Basic Amount", "Basic Amount"]);
+                let total = getSafe(p, ["Total Amount", "Product Total Amount"]);
+
+                pHtml += `<tr><td>${getSafe(p, ["Product Name"]) || '-'}</td><td>${getSafe(p, ["Capacity"]) || '-'}</td><td>${getSafe(p, ["Model"]) || '-'}</td><td>${getSafe(p, ["Make"]) || '-'}</td><td>${wty || '-'}</td><td>${clause || '-'}</td><td>${qty || '-'}</td><td>${rate || '-'}</td><td>${gst || '0'}%</td><td>${basic || '0.00'}</td><td>${total || '0.00'}</td></tr>`; 
+            });
+        }
         document.querySelector('#v-productTable tbody').innerHTML = pHtml;
 
         let dHtml = "";
-        if (!childItems.length) dHtml = '<tr><td colspan="3" style="text-align:center; color:#64748b; padding:20px;">No documents attached.</td></tr>';
-        else childItems.forEach(item => {
-            if(!item) return;
-            let attachHtml = (item["Attachment"] && item["Attachment"].data) ? `<a href="${item["Attachment"].data}" download="${item["Attachment"].name}" style="color:var(--primary); font-weight:600; text-decoration:none;">📥 Download ${item["Attachment"].name}</a>` : ((typeof item["Attachment"] === 'string' && item["Attachment"] !== "None") ? item["Attachment"] : "None");
-            dHtml += `<tr><td>${item["Document ID"] || item["Product ID"] || '-'}</td><td>${item["Document Name"] || '-'}</td><td>${attachHtml}</td></tr>`;
-        });
+        if (childItems.length === 0) {
+            dHtml = '<tr><td colspan="3" style="text-align:center; color:#64748b; padding:20px;">No documents attached.</td></tr>';
+        } else {
+            childItems.forEach(item => {
+                let docId = getSafe(item, ["Document ID", "Product ID"]);
+                let docName = getSafe(item, ["Document Name"]);
+                let attachmentData = getSafe(item, ["Attachment"]);
+
+                let attachHtml = (attachmentData && attachmentData.data) 
+                    ? `<a href="${attachmentData.data}" download="${attachmentData.name}" style="color:var(--primary); font-weight:600; text-decoration:none;">📥 Download ${attachmentData.name}</a>` 
+                    : ((typeof attachmentData === 'string' && attachmentData !== "None" && attachmentData !== "") ? attachmentData : "None");
+                
+                dHtml += `<tr><td>${docId || '-'}</td><td>${docName || '-'}</td><td>${attachHtml}</td></tr>`;
+            });
+        }
         document.querySelector('#v-childTable tbody').innerHTML = dHtml;
 
         let rHtml = "";
-        if (!remarks.length) rHtml = '<tr><td colspan="3" style="text-align:center; color:#64748b; padding:20px;">No remarks added.</td></tr>';
-        else remarks.forEach(rem => { if(rem) rHtml += `<tr><td>${rem["Date"] || '-'}</td><td>${rem["Remark By"] || '-'}</td><td>${rem["Remark"] || '-'}</td></tr>`; });
+        if (remarks.length === 0) {
+            rHtml = '<tr><td colspan="3" style="text-align:center; color:#64748b; padding:20px;">No remarks added.</td></tr>';
+        } else {
+            remarks.forEach(rem => { 
+                rHtml += `<tr><td>${formatExcelDate(getSafe(rem, ["Date"]))}</td><td>${getSafe(rem, ["Remark By"]) || '-'}</td><td>${getSafe(rem, ["Remark"]) || '-'}</td></tr>`; 
+            });
+        }
         document.querySelector('#v-remarkTable tbody').innerHTML = rHtml;
 
         document.getElementById('viewModal').style.display = 'block';
     }
 
     function openEditModal(index) {
-        const order = ordersData[index]["Sales Order"];
-        const products = ordersData[index]["Products"] || [];
-        const childItems = ordersData[index]["SalesChildTable"] || [];
-        const remarks = ordersData[index]["RemarksTable"] || [];
+        const order = ordersData[index]["Sales Order"] || {};
+        const products = extractDataArray(ordersData[index], "ProductsTable", ["product name", "capacity", "qty", "make"]);
+        const childItems = extractDataArray(ordersData[index], "DocumentsTable", ["document", "attachment"]);
+        const remarks = extractDataArray(ordersData[index], "RemarksTable", ["remark", "date"]);
+        
         document.getElementById('editIndex').value = index;
 
         const set = (id, key, def="") => { const el = document.getElementById(id); if(el) el.value = order[key] || def; };
         
         set('m-uid', "UID"); set('m-salesPerson', "Sales Person Name"); set('m-status', "Status", "Submitted"); set('m-customerName', "Customer Name"); set('m-contactPerson', "Contact Person"); set('m-contactDetails', "Contact Details"); set('m-email', "Email"); 
         
-        set('m-poNumber', "PO Number"); set('m-poDate', "PO Date"); set('m-orderType', "Order Type to mention", "Dealer"); set('m-orderSource', "Order Source"); set('m-segment', "Segments"); set('m-fy', "FY"); set('m-prostarmBranch', "ProstarM Branch");
+        set('m-poNumber', "PO Number"); 
+        document.getElementById('m-poDate').value = formatExcelDate(order["PO Date"]); 
+        document.getElementById('m-orderType').value = orderTypeLabel(order["Order Type to mention"]) || "Government";
+        set('m-orderSource', "Order Source"); set('m-segment', "Segments"); set('m-fy', "FY"); set('m-prostarmBranch', "ProstarM Branch");
         
         set('m-poAmount', "Price bifurcation / PO Amount"); set('m-installScope', "Installation Scope", "Not Required"); set('m-boq', "BOQ / Product details"); 
         set('m-retentionBg', "Retension / BG/Not required"); set('m-bgRetentionPercent', "% Of BG Retension"); 
@@ -1107,20 +1424,32 @@
         set('m-amcMentioned', "AMC Mentioned In PO"); set('m-amcDuration', "AMC Duration (Year)"); set('m-pmRequired', "PM Required during warranty period"); set('m-paymentTerms', "Payments Terms"); set('m-paymentStatus', "Payment Status");
 
         set('m-billing', "Billing Address"); set('m-delivery', "Delivery Address"); set('m-installAdd', "Installation Address"); set('m-location', "Location"); set('m-pin', "Pin code"); set('m-dispatch', "Dispatch Type", "Delivery"); set('m-pickup', "Pickup Location");
-        set('m-toBeCompletedOn', "To be Completed On"); set('m-regionZoneOffice', "Region /Zonal Office"); set('m-state', "State"); set('m-zone', "Zone");
+        
+        document.getElementById('m-toBeCompletedOn').value = formatExcelDate(order["To be Completed On"]);
+        set('m-regionZoneOffice', "Region /Zonal Office"); set('m-state', "State"); set('m-zone', "Zone");
         
         document.getElementById('m-billToGst').value = order["Bill to GST Number"] || order["GST Number"] || "";
         set('m-shipToGst', "Ship to GST Number");
 
-        set('m-broadStatus', "Broad Status"); set('m-workStatus', "Work Status"); set('m-deliveryDate', "Delivery Date"); set('m-installationDate', "Installation Date");
-        set('m-invoiceNumber', "Invoice Number"); set('m-invoiceDate', "Invoice Date"); set('m-invoiceBasicAmount', "Basic Amount"); set('m-invoiceAmount', "Invoice Amount"); set('m-billingDone', "Billing Done ?");
+        set('m-broadStatus', "Broad Status"); set('m-workStatus', "Work Status"); 
+        document.getElementById('m-deliveryDate').value = formatExcelDate(order["Delivery Date"]);
+        document.getElementById('m-installationDate').value = formatExcelDate(order["Installation Date"]);
+        
+        set('m-invoiceNumber', "Invoice Number"); 
+        document.getElementById('m-invoiceDate').value = formatExcelDate(order["Invoice Date"]);
+        set('m-invoiceBasicAmount', "Basic Amount"); set('m-invoiceAmount', "Invoice Amount"); set('m-billingDone', "Billing Done ?");
 
-        set('m-billSubmissionStatus', "Bill Submision Status"); set('m-compCertificate', "Comp Certificate"); set('m-eta', "ETA"); set('m-productSerialNumber', "Product Serial Number");
-        set('m-engineerName', "Engineer Name"); set('m-materialReceivedDate', "Material Received Date"); set('m-statusAge', "Status Age"); 
+        set('m-billSubmissionStatus', "Bill Submision Status"); set('m-compCertificate', "Comp Certificate"); 
+        document.getElementById('m-eta').value = formatExcelDate(order["ETA"]); 
+        set('m-productSerialNumber', "Product Serial Number");
+        
+        set('m-engineerName', "Engineer Name"); 
+        document.getElementById('m-materialReceivedDate').value = formatExcelDate(order["Material Received Date"]);
+        set('m-statusAge', "Status Age"); 
 
         let ageingDays = 0;
         if (order["PO Date"]) {
-            const poDate = new Date(order["PO Date"]);
+            const poDate = new Date(formatExcelDate(order["PO Date"]));
             const today = new Date();
             const diffTime = Math.abs(today - poDate);
             ageingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -1138,73 +1467,102 @@
         let lastRemarkStr = "";
         if (remarks.length > 0) {
             let lastObj = remarks[remarks.length - 1];
-            lastRemarkStr = `[${lastObj["Date"] || '-'}] ${lastObj["Remark By"] || '-'}: ${lastObj["Remark"] || '-'}`;
+            lastRemarkStr = `[${formatExcelDate(getSafe(lastObj, ["Date"]))}] ${getSafe(lastObj, ["Remark By"]) || '-'}: ${getSafe(lastObj, ["Remark"]) || '-'}`;
         }
         document.getElementById('m-lastFollowupRemark').value = lastRemarkStr;
 
         document.querySelector('#editModal .m-tab-btn').click(); 
         
         document.querySelector('#m-productTable tbody').innerHTML = '';
-        products.forEach(prod => { 
-            if(!prod) return;
-            const pId = prod["Product ID"] || generateChildGUID(); 
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <input type="hidden" class="m-prod-id" value="${pId}">
-                <td><input type="text" class="m-prod-name" value="${prod["Product Name"] || ''}"></td>
-                <td><input type="text" class="m-prod-capacity" value="${prod["Capacity"] || ''}"></td>
-                <td><input type="text" class="m-prod-model" value="${prod["Model"] || ''}"></td>
-                <td><input type="text" class="m-prod-make" value="${prod["Make"] || ''}"></td>
-                <td><input type="number" class="m-prod-wty-month" value="${prod["Warranty (Months)"] || ''}"></td>
-                <td><select class="m-prod-wty-clause"><option value="" disabled ${!prod["Warranty Clause"] ? 'selected' : ''}>Select...</option><option value="Onsite" ${prod["Warranty Clause"] === 'Onsite' ? 'selected' : ''}>Onsite</option><option value="Carry in" ${prod["Warranty Clause"] === 'Carry in' ? 'selected' : ''}>Carry in</option></select></td>
-                <td><input type="number" class="m-prod-qty" value="${prod["QTY"] || 1}" min="1" oninput="mCalculateRow(this)"></td>
-                <td><input type="number" class="m-prod-rate" value="${prod["Rate"] || '0.00'}" min="0" step="0.01" oninput="mCalculateRow(this)"></td>
-                <td><select class="m-prod-gst" onchange="mCalculateRow(this)"><option value="0" ${prod["GST %"] == '0' ? 'selected' : ''}>0%</option><option value="5" ${prod["GST %"] == '5' ? 'selected' : ''}>5%</option><option value="12" ${prod["GST %"] == '12' ? 'selected' : ''}>12%</option><option value="18" ${!prod["GST %"] || prod["GST %"] == '18' ? 'selected' : ''}>18%</option><option value="28" ${prod["GST %"] == '28' ? 'selected' : ''}>28%</option></select></td>
-                <td><input type="number" class="m-prod-basic input-bare" value="${prod["PO Amount"] || '0.00'}" readonly></td>
-                <td><input type="number" class="m-prod-total input-bare" value="${prod["Total Amount"] || '0.00'}" readonly></td>
-            `; 
-            document.querySelector('#m-productTable tbody').appendChild(row);
-        });
+        if (products.length > 0) {
+            products.forEach(prod => { 
+                if(!prod || Object.keys(prod).length === 0) return;
+                const pId = getSafe(prod, ["Product ID"]) || generateChildGUID(); 
+                
+                let wty = getSafe(prod, ["Warranty (Months)", "Warranty (Mos)", "Warranty Mos", "WTY(MOS)", "Warranty"]);
+                let clause = getSafe(prod, ["Warranty Clause", "Clause"]);
+                let qty = getSafe(prod, ["QTY", "Quantity"]) || '1';
+                let rate = getSafe(prod, ["Rate"]) || '0.00';
+                let gst = getSafe(prod, ["GST %", "GST", "GSTPercent"]) || '18';
+                let basic = getSafe(prod, ["PO Amount", "Product Basic Amount", "Basic Amount"]) || '0.00';
+                let total = getSafe(prod, ["Total Amount", "Product Total Amount"]) || '0.00';
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <input type="hidden" class="m-prod-id" value="${pId}">
+                        <input type="text" class="m-prod-name" value="${getSafe(prod, ["Product Name"]) || ''}">
+                    </td>
+                    <td><input type="text" class="m-prod-capacity" value="${getSafe(prod, ["Capacity"]) || ''}"></td>
+                    <td><input type="text" class="m-prod-model" value="${getSafe(prod, ["Model"]) || ''}"></td>
+                    <td><input type="text" class="m-prod-make" value="${getSafe(prod, ["Make"]) || ''}"></td>
+                    <td><input type="number" class="m-prod-wty-month" value="${wty}"></td>
+                    <td><select class="m-prod-wty-clause"><option value="" disabled ${!clause ? 'selected' : ''}>Select...</option><option value="Onsite" ${clause === 'Onsite' ? 'selected' : ''}>Onsite</option><option value="Carry in" ${clause === 'Carry in' ? 'selected' : ''}>Carry in</option></select></td>
+                    <td><input type="number" class="m-prod-qty" value="${qty}" min="1" oninput="mCalculateRow(this)"></td>
+                    <td><input type="number" class="m-prod-rate" value="${rate}" min="0" step="0.01" oninput="mCalculateRow(this)"></td>
+                    <td><select class="m-prod-gst" onchange="mCalculateRow(this)"><option value="0" ${gst == '0' ? 'selected' : ''}>0%</option><option value="5" ${gst == '5' ? 'selected' : ''}>5%</option><option value="12" ${gst == '12' ? 'selected' : ''}>12%</option><option value="18" ${gst == '18' ? 'selected' : ''}>18%</option><option value="28" ${gst == '28' ? 'selected' : ''}>28%</option></select></td>
+                    <td><input type="number" class="m-prod-basic input-bare" value="${basic}" readonly></td>
+                    <td><input type="number" class="m-prod-total input-bare" value="${total}" readonly></td>
+                `; 
+                document.querySelector('#m-productTable tbody').appendChild(row);
+            });
+        }
 
         document.querySelector('#m-childTable tbody').innerHTML = '';
-        childItems.forEach(item => { 
-            if(!item) return;
-            const docId = item["Document ID"] || item["Product ID"] || generateChildGUID();
-            const docName = item["Document Name"] || '';
-            const attachmentData = item["Attachment"];
-            const row = document.createElement('tr');
-            let label = (attachmentData && attachmentData.name) ? attachmentData.name : (typeof attachmentData === 'string' ? attachmentData : "None");
-            row.innerHTML = `
-                <td class="td-id"><input type="text" class="m-child-doc-id input-bare" value="${docId}" readonly></td>
-                <td class="td-doc"><select class="m-child-doc-name" style="width: 100%;"><option value="" disabled>Select Document...</option><option value="PO" ${docName === 'PO' ? 'selected' : ''}>PO</option><option value="Approval Mail" ${docName === 'Approval Mail' ? 'selected' : ''}>Approval Mail</option><option value="Price BOQ" ${docName === 'Price BOQ' ? 'selected' : ''}>Price BOQ</option><option value="Tech.BOQ" ${docName === 'Tech.BOQ' ? 'selected' : ''}>Tech.BOQ</option></select></td>
-                <td class="td-file"><div style="margin-bottom: 6px; font-size: 11px; color: #64748b;">Saved: <strong class="cur-file" style="color: #0f172a;">${label}</strong></div><div class="custom-file-upload"><label class="custom-file-btn"><input type="file" class="m-child-attachment hidden-file-input" onchange="updateFileName(this)"> Upload New</label><span class="file-name-display">No new file</span></div></td>
-            `;
-            document.querySelector('#m-childTable tbody').appendChild(row);
-        });
+        if (childItems.length === 0) {
+            document.querySelector('#m-childTable tbody').innerHTML = `<tr class="empty-row"><td colspan="3" style="text-align:center; color:#64748b; padding:15px; font-style:italic;">No documents found. Click "+ Add Document" below to attach one.</td></tr>`;
+        } else {
+            childItems.forEach(item => { 
+                if(!item || Object.keys(item).length === 0) return;
+                const docId = getSafe(item, ["Document ID", "Product ID"]) || generateChildGUID();
+                const docName = getSafe(item, ["Document Name"]);
+                const attachmentData = getSafe(item, ["Attachment"]);
+                
+                const row = document.createElement('tr');
+                let label = (attachmentData && attachmentData.name) ? attachmentData.name : (typeof attachmentData === 'string' && attachmentData !== "None" && attachmentData !== "" ? attachmentData : "None");
+                row.innerHTML = `
+                    <td class="td-id"><input type="text" class="m-child-doc-id input-bare" value="${docId}" readonly></td>
+                    <td class="td-doc"><select class="m-child-doc-name" style="width: 100%;"><option value="" disabled>Select Document...</option><option value="PO" ${docName === 'PO' ? 'selected' : ''}>PO</option><option value="Approval Mail" ${docName === 'Approval Mail' ? 'selected' : ''}>Approval Mail</option><option value="Price BOQ" ${docName === 'Price BOQ' ? 'selected' : ''}>Price BOQ</option><option value="Tech.BOQ" ${docName === 'Tech.BOQ' ? 'selected' : ''}>Tech.BOQ</option></select></td>
+                    <td class="td-file"><div style="margin-bottom: 6px; font-size: 11px; color: #64748b;">Saved: <strong class="cur-file" style="color: #0f172a;">${label}</strong></div><div class="custom-file-upload"><label class="custom-file-btn"><input type="file" class="m-child-attachment hidden-file-input" onchange="updateFileName(this)"> Upload New</label><span class="file-name-display">No new file</span></div></td>
+                `;
+                document.querySelector('#m-childTable tbody').appendChild(row);
+            });
+        }
 
         document.querySelector('#m-remarkTable tbody').innerHTML = '';
-        remarks.forEach(rem => { 
-            if(!rem) return;
-            const rId = rem["Remark ID"] || generateChildGUID();
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <input type="hidden" class="m-rem-id" value="${rId}">
-                <td><input type="date" class="m-rem-date" value="${rem["Date"] || ''}"></td>
-                <td><input type="text" class="m-rem-by" value="${rem["Remark By"] || ''}"></td>
-                <td><input type="text" class="m-rem-text" value="${rem["Remark"] || ''}"></td>
-            `;
-            document.querySelector('#m-remarkTable tbody').appendChild(row);
-        });
+        if (remarks.length === 0) {
+            document.querySelector('#m-remarkTable tbody').innerHTML = `<tr class="empty-row"><td colspan="3" style="text-align:center; color:#64748b; padding:15px; font-style:italic;">No remarks found. Click "+ Add Remark" below.</td></tr>`;
+        } else {
+            remarks.forEach(rem => { 
+                if(!rem || Object.keys(rem).length === 0) return;
+                const rId = getSafe(rem, ["Remark ID"]) || generateChildGUID();
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <input type="hidden" class="m-rem-id" value="${rId}">
+                        <input type="date" class="m-rem-date" value="${formatExcelDate(getSafe(rem, ["Date"])) || ''}">
+                    </td>
+                    <td><input type="text" class="m-rem-by" value="${getSafe(rem, ["Remark By"]) || ''}"></td>
+                    <td><input type="text" class="m-rem-text" value="${getSafe(rem, ["Remark"]) || ''}"></td>
+                `;
+                document.querySelector('#m-remarkTable tbody').appendChild(row);
+            });
+        }
 
         document.getElementById('editModal').style.display = 'block';
     }
 
     function mAddProductRow() {
+        const emptyRow = document.querySelector('#m-productTable tbody .empty-row');
+        if(emptyRow) emptyRow.remove();
+
         const row = document.createElement('tr');
         const pId = generateChildGUID();
         row.innerHTML = `
-            <input type="hidden" class="m-prod-id" value="${pId}">
-            <td><input type="text" class="m-prod-name" placeholder="Item Name"></td>
+            <td>
+                <input type="hidden" class="m-prod-id" value="${pId}">
+                <input type="text" class="m-prod-name" placeholder="Item Name">
+            </td>
             <td><input type="text" class="m-prod-capacity" placeholder="Capacity"></td>
             <td><input type="text" class="m-prod-model" placeholder="Model"></td>
             <td><input type="text" class="m-prod-make" placeholder="Make"></td>
@@ -1237,6 +1595,9 @@
     }
 
     function mAddChildRow() {
+        const emptyRow = document.querySelector('#m-childTable tbody .empty-row');
+        if(emptyRow) emptyRow.remove();
+
         const row = document.createElement('tr');
         row.innerHTML = `
             <td class="td-id"><input type="text" class="m-child-doc-id input-bare" value="${generateChildGUID()}" readonly></td>
@@ -1247,15 +1608,20 @@
     }
 
     function mAddRemarkRow(rem = {}) {
+        const emptyRow = document.querySelector('#m-remarkTable tbody .empty-row');
+        if(emptyRow) emptyRow.remove();
+
         const today = new Date().toLocaleDateString('en-CA');
         const user = sessionStorage.getItem('loggedInUser') || document.getElementById('m-salesPerson').value || "User";
         const rId = rem["Remark ID"] || generateChildGUID();
         const row = document.createElement('tr');
         row.innerHTML = `
-            <input type="hidden" class="m-rem-id" value="${rId}">
-            <td><input type="date" class="m-rem-date" value="${rem["Date"] || today}"></td>
-            <td><input type="text" class="m-rem-by" value="${rem["Remark By"] || user}"></td>
-            <td><input type="text" class="m-rem-text" placeholder="Enter remark details..." value="${rem["Remark"] || ''}"></td>
+            <td>
+                <input type="hidden" class="m-rem-id" value="${rId}">
+                <input type="date" class="m-rem-date" value="${formatExcelDate(getSafe(rem, ["Date"])) || today}">
+            </td>
+            <td><input type="text" class="m-rem-by" value="${getSafe(rem, ["Remark By"]) || user}"></td>
+            <td><input type="text" class="m-rem-text" placeholder="Enter remark details..." value="${getSafe(rem, ["Remark"]) || ''}"></td>
         `;
         document.querySelector('#m-remarkTable tbody').appendChild(row);
     }
@@ -1265,36 +1631,45 @@
         if(index === "" || !ordersData[index]) return;
         
         const order = ordersData[index]["Sales Order"];
-        const getVal = id => document.getElementById(id).value;
-        const currentParentUID = getVal('m-uid'); 
+        const val = id => document.getElementById(id).value === "" ? null : document.getElementById(id).value;
+        const currentParentUID = val('m-uid'); 
         
-        order["Sales Person Name"] = getVal('m-salesPerson'); order["Status"] = getVal('m-status'); order["Customer Name"] = getVal('m-customerName'); order["Contact Person"] = getVal('m-contactPerson'); order["Contact Details"] = getVal('m-contactDetails'); order["Email"] = getVal('m-email'); 
-        order["PO Number"] = getVal('m-poNumber'); order["PO Date"] = getVal('m-poDate'); order["Order Type to mention"] = getVal('m-orderType'); order["Order Source"] = getVal('m-orderSource'); order["Segments"] = getVal('m-segment'); order["FY"] = getVal('m-fy'); order["ProstarM Branch"] = getVal('m-prostarmBranch');
+        order["Sales Person Name"] = val('m-salesPerson'); order["Status"] = val('m-status'); order["Customer Name"] = val('m-customerName'); order["Contact Person"] = val('m-contactPerson'); order["Contact Details"] = val('m-contactDetails'); order["Email"] = val('m-email'); 
+        order["PO Number"] = val('m-poNumber'); order["PO Date"] = val('m-poDate'); order["Order Type to mention"] = val('m-orderType'); order["Order Source"] = val('m-orderSource'); order["Segments"] = val('m-segment'); order["FY"] = val('m-fy'); order["ProstarM Branch"] = val('m-prostarmBranch');
         
-        order["Bill to GST Number"] = getVal('m-billToGst'); order["Ship to GST Number"] = getVal('m-shipToGst');
-        order["Price bifurcation / PO Amount"] = getVal('m-poAmount'); order["Installation Scope"] = getVal('m-installScope');
-        order["Retension / BG/Not required"] = getVal('m-retentionBg'); order["% Of BG Retension"] = getVal('m-bgRetentionPercent');
-        order["Buyback Status"] = getVal('m-buyback'); order["Buyback Configuration"] = getVal('m-buybackConfig'); order["Buyback Amount"] = getVal('m-buybackAmount'); order["Buyback Bill ?"] = getVal('m-buybackBill');
+        order["Bill to GST Number"] = val('m-billToGst'); order["Ship to GST Number"] = val('m-shipToGst');
+        order["Price bifurcation / PO Amount"] = val('m-poAmount'); order["Installation Scope"] = val('m-installScope');
+        order["Retension / BG/Not required"] = val('m-retentionBg'); order["% Of BG Retension"] = val('m-bgRetentionPercent');
+        order["Buyback Status"] = val('m-buyback'); order["Buyback Configuration"] = val('m-buybackConfig'); order["Buyback Amount"] = val('m-buybackAmount'); order["Buyback Bill ?"] = val('m-buybackBill');
         
-        order["AMC Mentioned In PO"] = getVal('m-amcMentioned'); order["AMC Duration (Year)"] = getVal('m-amcDuration'); order["PM Required during warranty period"] = getVal('m-pmRequired'); order["Payments Terms"] = getVal('m-paymentTerms'); order["Payment Status"] = getVal('m-paymentStatus');
+        order["AMC Mentioned In PO"] = val('m-amcMentioned'); order["AMC Duration (Year)"] = val('m-amcDuration'); order["PM Required during warranty period"] = val('m-pmRequired'); order["Payments Terms"] = val('m-paymentTerms'); order["Payment Status"] = val('m-paymentStatus');
         
-        order["BOQ / Product details"] = getVal('m-boq'); order["Billing Address"] = getVal('m-billing'); order["Delivery Address"] = getVal('m-delivery'); order["Installation Address"] = getVal('m-installAdd'); order["Location"] = getVal('m-location'); order["Pin code"] = getVal('m-pin'); order["Dispatch Type"] = getVal('m-dispatch'); order["Pickup Location"] = getVal('m-pickup');
-        order["To be Completed On"] = getVal('m-toBeCompletedOn'); order["Region /Zonal Office"] = getVal('m-regionZoneOffice'); order["State"] = getVal('m-state'); order["Zone"] = getVal('m-zone');
+        order["BOQ / Product details"] = val('m-boq'); order["Billing Address"] = val('m-billing'); order["Delivery Address"] = val('m-delivery'); order["Installation Address"] = val('m-installAdd'); order["Location"] = val('m-location'); order["Pin code"] = val('m-pin'); order["Dispatch Type"] = val('m-dispatch'); order["Pickup Location"] = val('m-pickup');
+        order["To be Completed On"] = val('m-toBeCompletedOn'); order["Region /Zonal Office"] = val('m-regionZoneOffice'); order["State"] = val('m-state'); order["Zone"] = val('m-zone');
 
-        order["Broad Status"] = getVal('m-broadStatus'); order["Work Status"] = getVal('m-workStatus'); order["Delivery Date"] = getVal('m-deliveryDate'); order["Installation Date"] = getVal('m-installationDate');
-        order["Invoice Number"] = getVal('m-invoiceNumber'); order["Invoice Date"] = getVal('m-invoiceDate'); order["Basic Amount"] = getVal('m-invoiceBasicAmount'); order["Invoice Amount"] = getVal('m-invoiceAmount'); order["Billing Done ?"] = getVal('m-billingDone');
+        order["Broad Status"] = val('m-broadStatus'); order["Work Status"] = val('m-workStatus'); order["Delivery Date"] = val('m-deliveryDate'); order["Installation Date"] = val('m-installationDate');
+        order["Invoice Number"] = val('m-invoiceNumber'); order["Invoice Date"] = val('m-invoiceDate'); order["Basic Amount"] = val('m-invoiceBasicAmount'); order["Invoice Amount"] = val('m-invoiceAmount'); order["Billing Done ?"] = val('m-billingDone');
 
-        order["Bill Submision Status"] = getVal('m-billSubmissionStatus'); order["Comp Certificate"] = getVal('m-compCertificate'); order["ETA"] = getVal('m-eta'); order["Product Serial Number"] = getVal('m-productSerialNumber');
-        order["Engineer Name"] = getVal('m-engineerName'); order["Material Received Date"] = getVal('m-materialReceivedDate'); order["Status Age"] = getVal('m-statusAge'); 
+        order["Bill Submision Status"] = val('m-billSubmissionStatus'); order["Comp Certificate"] = val('m-compCertificate'); order["ETA"] = val('m-eta'); order["Product Serial Number"] = val('m-productSerialNumber');
+        order["Engineer Name"] = val('m-engineerName'); order["Material Received Date"] = val('m-materialReceivedDate'); order["Status Age"] = val('m-statusAge'); 
 
-        ordersData[index]["Products"] = Array.from(document.querySelectorAll('#m-productTable tbody tr')).map(row => ({
+        ordersData[index]["Products"] = Array.from(document.querySelectorAll('#m-productTable tbody tr:not(.empty-row)')).map(row => ({
             "Product ID": row.querySelector('.m-prod-id').value, 
-            "Parent UID": currentParentUID,
-            "Product Name": row.querySelector('.m-prod-name').value, "Capacity": row.querySelector('.m-prod-capacity').value, "Model": row.querySelector('.m-prod-model').value, "Make": row.querySelector('.m-prod-make').value, 
-            "Warranty (Months)": row.querySelector('.m-prod-wty-month').value, "Warranty Clause": row.querySelector('.m-prod-wty-clause').value || "", "QTY": row.querySelector('.m-prod-qty').value, "Rate": row.querySelector('.m-prod-rate').value, "GST %": row.querySelector('.m-prod-gst').value, "PO Amount": row.querySelector('.m-prod-basic').value, "Total Amount": row.querySelector('.m-prod-total').value
+            "Parent UID P": currentParentUID, // STRICT PA SCHEMA
+            "Product Name": row.querySelector('.m-prod-name').value || "Unnamed", 
+            "Capacity": row.querySelector('.m-prod-capacity').value || "", 
+            "Model": row.querySelector('.m-prod-model').value || "", 
+            "Make": row.querySelector('.m-prod-make').value || "", 
+            "Warranty (Months)": row.querySelector('.m-prod-wty-month').value || "0", 
+            "Warranty Clause": row.querySelector('.m-prod-wty-clause').value || "", 
+            "QTY": row.querySelector('.m-prod-qty').value || "1", 
+            "Rate": row.querySelector('.m-prod-rate').value || "0", 
+            "GST %": row.querySelector('.m-prod-gst').value || "0", 
+            "PO Amount": row.querySelector('.m-prod-basic').value || "0", 
+            "Total Amount": row.querySelector('.m-prod-total').value || "0"
         }));
 
-        ordersData[index]["RemarksTable"] = Array.from(document.querySelectorAll('#m-remarkTable tbody tr')).map(row => ({ 
+        ordersData[index]["RemarksTable"] = Array.from(document.querySelectorAll('#m-remarkTable tbody tr:not(.empty-row)')).map(row => ({ 
             "Remark ID": row.querySelector('.m-rem-id').value, 
             "Parent UID": currentParentUID, 
             "Date": row.querySelector('.m-rem-date').value, 
@@ -1302,8 +1677,8 @@
             "Remark": row.querySelector('.m-rem-text').value 
         }));
 
-        const legacyTable = ordersData[index]["SalesChildTable"] || [];
-        const rows = document.querySelectorAll('#m-childTable tbody tr');
+        const legacyTable = extractDataArray(ordersData[index], "SalesChildTable", ["document", "attachment"]);
+        const rows = document.querySelectorAll('#m-childTable tbody tr:not(.empty-row)');
         
         const newChildData = [];
         for (const row of rows) {
@@ -1314,10 +1689,15 @@
 
             if (fileInput && fileInput.files.length > 0) finalAttachment = fileInput.files[0].name; 
             else if (currentFileName !== "None") {
-                const legacyRecord = legacyTable.find(c => c && (c["Document ID"] === rowDocId || c["Product ID"] === rowDocId));
-                if (legacyRecord) finalAttachment = legacyRecord["Attachment"];
+                const legacyRecord = legacyTable.find(c => c && (getSafe(c, ["Document ID", "Product ID"]) === rowDocId));
+                if (legacyRecord) finalAttachment = getSafe(legacyRecord, ["Attachment"]);
             }
-            newChildData.push({ "Document ID": rowDocId, "Parent_UID": currentParentUID, "Document Name": row.querySelector('.m-child-doc-name').value || "", "Attachment": finalAttachment });
+            newChildData.push({ 
+                "Document ID": rowDocId, 
+                "Parent_UID D": currentParentUID, // STRICT PA SCHEMA
+                "Document Name": row.querySelector('.m-child-doc-name').value || "", 
+                "Attachment": finalAttachment 
+            });
         }
         ordersData[index]["SalesChildTable"] = newChildData;
         
@@ -1345,14 +1725,12 @@
                 renderTable(); 
                 loadDashboardData(); 
             } else {
-                throw new Error("Cloud sync failed.");
+                const errText = await response.text();
+                throw new Error(`HTTP ${response.status}: ${errText.slice(0, 100)}...`);
             }
         } catch(e) { 
-            console.error(e);
-            alert("Local save successful, but cloud sync failed. Ensure your webhook is correct."); 
-            closeModal('editModal');
-            renderTable(); 
-            loadDashboardData(); 
+            console.error("Cloud sync failed:", e);
+            alert(`Microsoft Power Automate rejected the Edit submission.\n\nReason: ${e.message}\n\nPlease ensure you have filled out the required numeric fields.`); 
         }
     }
 

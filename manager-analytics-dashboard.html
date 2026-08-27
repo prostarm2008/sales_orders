@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manager Analytics Dashboard | Prostarm CRM</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="global.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<style>
+:root{
+  --primary:#1e4fd6; --primary-hover:#1640b0; --primary-light:#eaf0ff;
+  --success:#16a34a; --success-light:#eafbf0;
+  --warning:#f59e0b; --warning-light:#fff8e8;
+  --danger:#dc2626; --danger-light:#fdecec;
+  --violet:#8b5cf6; --violet-light:#f3eeff;
+  --border:#e2e8f0; --card-bg:#ffffff; --bg:#f2f5fc;
+  --text-main:#0f172a; --text-muted:#64748b;
+}
+*{box-sizing:border-box;}
+body{margin:0; font-family:'Inter',sans-serif; background:var(--bg); color:var(--text-main);}
+
+.topbar{display:flex; align-items:center; justify-content:space-between; background:var(--card-bg); border-bottom:1px solid var(--border); padding:14px 28px; position:sticky; top:0; z-index:50;}
+.topbar h1{font-size:19px; margin:0; font-weight:800; letter-spacing:-0.2px;}
+.topbar .subtitle{font-size:12.5px; color:var(--text-muted); margin-top:2px;}
+.topbar-right{display:flex; align-items:center; gap:14px;}
+.sync-pill{display:flex; align-items:center; gap:6px; font-size:12.5px; padding:6px 12px; border-radius:20px; font-weight:600;}
+.sync-pill.live{background:var(--success-light); color:#047857;}
+.sync-pill.cached{background:var(--warning-light); color:#b45309;}
+.dot{width:7px; height:7px; border-radius:50%; background:currentColor;}
+.btn{border:none; border-radius:8px; font-weight:600; font-size:13px; cursor:pointer; padding:9px 16px; transition:.15s;}
+.btn-primary{background:var(--primary); color:#fff;}
+.btn-primary:hover{background:var(--primary-hover);}
+.btn-outline{background:#fff; color:var(--text-main); border:1px solid var(--border);}
+.btn-outline:hover{background:#f8fafc;}
+.btn-export{background:var(--success); color:#fff;}
+.btn-export:hover{background:#0ea271;}
+
+.main{max-width:1440px; margin:0 auto; padding:22px 28px 60px;}
+
+/* Filters */
+.filters-card{background:var(--card-bg); border:1px solid var(--border); border-radius:14px; padding:18px 20px; margin-bottom:22px; box-shadow:0 1px 3px rgba(0,0,0,.03);}
+.filters-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;}
+.filters-head h2{font-size:13px; text-transform:uppercase; letter-spacing:.6px; color:var(--text-muted); margin:0; font-weight:700;}
+.filters-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(180px,1fr)); gap:14px;}
+.f-group{display:flex; flex-direction:column; gap:5px;}
+.f-group label{font-size:11.5px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.4px;}
+.f-group select, .f-group input{padding:9px 10px; border:1px solid var(--border); border-radius:8px; font-size:13.5px; font-family:inherit; background:#fff; color:var(--text-main);}
+.f-group select:focus, .f-group input:focus{outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(37,99,235,.12);}
+.f-actions{display:flex; align-items:flex-end;}
+.active-filter-bar{display:flex; flex-wrap:wrap; gap:8px; margin-top:14px;}
+.chip{background:var(--primary-light); color:var(--primary); font-size:12px; font-weight:600; padding:5px 10px; border-radius:20px; display:flex; align-items:center; gap:6px;}
+.chip span{cursor:pointer; font-weight:800;}
+
+/* KPIs */
+.kpi-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:16px; margin-bottom:24px;}
+.kpi{background:var(--card-bg); border:1px solid var(--border); border-radius:14px; padding:18px; box-shadow:0 1px 3px rgba(0,0,0,.03); position:relative; overflow:hidden;}
+.kpi::before{content:''; position:absolute; top:0; left:0; width:4px; height:100%;}
+.kpi .label{font-size:11.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px; font-weight:700; margin-bottom:8px;}
+.kpi .value{font-size:23px; font-weight:800; letter-spacing:-0.3px;}
+.kpi .sub{font-size:11.5px; color:var(--text-muted); margin-top:4px;}
+.kpi.c-blue::before{background:var(--primary);} .kpi.c-green::before{background:var(--success);}
+.kpi.c-amber::before{background:var(--warning);} .kpi.c-red::before{background:var(--danger);}
+.kpi.c-violet::before{background:var(--violet);}
+
+/* Layout split */
+.split{display:grid; grid-template-columns:2fr 1fr; gap:20px; margin-bottom:24px; align-items:start;}
+@media(max-width:1100px){.split{grid-template-columns:1fr;}}
+
+.charts-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:18px;}
+@media(max-width:800px){.charts-grid{grid-template-columns:1fr;}}
+.chart-card{background:var(--card-bg); border:1px solid var(--border); border-radius:14px; padding:18px; box-shadow:0 1px 3px rgba(0,0,0,.03);}
+.chart-card h3{margin:0 0 4px 0; font-size:14px; font-weight:700;}
+.chart-card .hint{font-size:11.5px; color:var(--text-muted); margin-bottom:12px;}
+.canvas-wrapper{position:relative; height:230px;}
+
+/* Insights panel */
+.insights-card{background:var(--card-bg); border:1px solid var(--border); border-radius:14px; padding:18px; box-shadow:0 1px 3px rgba(0,0,0,.03); height:100%;}
+.insights-card h3{margin:0 0 14px 0; font-size:14px; font-weight:700;}
+.insight-item{display:flex; gap:12px; padding:12px 0; border-bottom:1px solid #f1f5f9;}
+.insight-item:last-child{border-bottom:none;}
+.insight-icon{width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0;}
+.insight-body b{font-size:13px; display:block; margin-bottom:2px;}
+.insight-body span{font-size:12px; color:var(--text-muted); line-height:1.4;}
+.insight-empty{text-align:center; color:var(--text-muted); font-size:13px; padding:30px 10px;}
+
+/* Table */
+.table-card{background:var(--card-bg); border:1px solid var(--border); border-radius:14px; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,.03);}
+.table-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;}
+.table-head h3{margin:0; font-size:14px; font-weight:700;}
+.table-head .count{font-size:12.5px; color:var(--text-muted); font-weight:500;}
+.search-box{padding:9px 12px; border:1px solid var(--border); border-radius:8px; font-size:13.5px; width:240px; font-family:inherit;}
+.table-scroll{overflow-x:auto;}
+table{width:100%; border-collapse:collapse; font-size:13px;}
+thead th{background:#f8fafc; text-align:left; padding:10px 12px; font-weight:700; color:var(--text-muted); font-size:11.5px; text-transform:uppercase; letter-spacing:.4px; white-space:nowrap; cursor:pointer; border-bottom:2px solid var(--border); user-select:none;}
+thead th:hover{color:var(--primary);}
+thead th.sorted::after{content:' ▾'; color:var(--primary);}
+thead th.sorted.asc::after{content:' ▴'; color:var(--primary);}
+tbody td{padding:10px 12px; border-bottom:1px solid #f1f5f9; white-space:nowrap;}
+tbody tr:hover{background:#f8fafc;}
+tbody tr.row-overdue{background:#fdecec;}
+.badge{display:inline-block; padding:3px 10px; border-radius:20px; font-size:11.5px; font-weight:700;}
+.badge-approved{background:#dcf7e3; color:#15803d;}
+.badge-submitted{background:#e4eaff; color:#173e9e;}
+.badge-rejected{background:#fbd9d9; color:#9f1d1d;}
+.badge-draft{background:#f1f5f9; color:#475569;}
+.pagination{display:flex; justify-content:space-between; align-items:center; margin-top:14px; font-size:12.5px; color:var(--text-muted);}
+.pagination .pg-btns{display:flex; gap:6px;}
+.pagination button{padding:6px 12px; border:1px solid var(--border); background:#fff; border-radius:6px; cursor:pointer; font-size:12.5px; font-weight:600;}
+.pagination button:disabled{opacity:.4; cursor:not-allowed;}
+.pagination button:not(:disabled):hover{background:#f1f5f9;}
+.empty-row td{text-align:center; padding:40px; color:var(--text-muted);}
+</style>
+</head>
+<body class="has-sidebar">
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">☰</button>
+<div class="sidebar-backdrop" onclick="toggleSidebar()"></div>
+<aside class="app-sidebar">
+    <div class="sidebar-brand">
+        <img src="Prostarm-logo.png" alt="Prostarm" onerror="this.outerHTML='<div style=\'font-weight:800; color:#1e4fd6; font-size:15px;\'>PROSTARM</div>';">
+    </div>
+    <nav class="sidebar-nav">
+        <div class="sidebar-section-label">Workspace</div>
+            <a href="Index.html" class="sidebar-link" data-roles="User,Manager"><span class="sidebar-icon">📝</span>Sales Order Entry</a>
+            <a href="dashboard.html" class="sidebar-link" data-roles="User,Manager"><span class="sidebar-icon">📊</span>Dashboard</a>
+            <a href="manager-analytics-dashboard.html" class="sidebar-link active" data-roles="Manager"><span class="sidebar-icon">📈</span>Manager Analytics</a>
+            <a href="grid-queue.html" class="sidebar-link" data-roles="Manager"><span class="sidebar-icon">🗂️</span>Grid Queue</a>
+            <a href="kanban-queue.html" class="sidebar-link" data-roles="Manager"><span class="sidebar-icon">🗃️</span>Kanban Board</a>
+            <a href="settings.html" class="sidebar-link" data-roles="Manager"><span class="sidebar-icon">⚙️</span>Settings</a>
+        <a href="#" class="sidebar-link sidebar-logout" onclick="logout(); return false;"><span class="sidebar-icon">🚪</span>Sign Out</a>
+    </nav>
+    <div class="sidebar-footer">
+        Prostarm CRM &middot; Power Redefined
+    </div>
+</aside>
+
+
+<div class="topbar">
+  <div>
+    <h1>📊 Manager Analytics Dashboard</h1>
+    <div class="subtitle">Sales pipeline performance — filter, drill down, decide</div>
+  </div>
+  <div class="topbar-right">
+    <div class="sync-pill live" id="syncPill"><span class="dot"></span><span id="syncText">Loading data…</span></div>
+    <button class="btn btn-outline" onclick="refreshData()">🔄 Refresh</button>
+    <button class="btn btn-export" onclick="exportFilteredCSV()">📥 Export View</button>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- FILTERS -->
+  <div class="filters-card">
+    <div class="filters-head">
+      <h2>Filters</h2>
+      <button class="btn btn-outline" style="padding:6px 12px; font-size:12px;" onclick="resetFilters()">✕ Reset all</button>
+    </div>
+    <div class="filters-grid">
+      <div class="f-group">
+        <label>Search</label>
+        <input type="text" id="fSearch" placeholder="UID, Customer, PO No…" oninput="applyFilters()">
+      </div>
+      <div class="f-group">
+        <label>Sales Person</label>
+        <select id="fSalesPerson" onchange="applyFilters()"><option value="">All Sales Persons</option></select>
+      </div>
+      <div class="f-group">
+        <label>Sales Entry Person</label>
+        <select id="fEntryPerson" onchange="applyFilters()"><option value="">All Entry Persons</option></select>
+      </div>
+      <div class="f-group">
+        <label>Status</label>
+        <select id="fStatus" onchange="applyFilters()"><option value="">All Status</option></select>
+      </div>
+      <div class="f-group">
+        <label>Order Type</label>
+        <select id="fOrderType" onchange="applyFilters()"><option value="">All Types</option></select>
+      </div>
+      <div class="f-group">
+        <label>Order Source</label>
+        <select id="fSource" onchange="applyFilters()"><option value="">All Sources</option></select>
+      </div>
+      <div class="f-group">
+        <label>Zone</label>
+        <select id="fZone" onchange="applyFilters()"><option value="">All Zones</option></select>
+      </div>
+      <div class="f-group">
+        <label>PO Date From</label>
+        <input type="date" id="fDateFrom" onchange="applyFilters()">
+      </div>
+      <div class="f-group">
+        <label>PO Date To</label>
+        <input type="date" id="fDateTo" onchange="applyFilters()">
+      </div>
+    </div>
+    <div class="active-filter-bar" id="activeChips"></div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-grid" id="kpiGrid"></div>
+
+  <div class="split">
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h3>Pipeline by Status</h3>
+        <div class="hint">Order count split across the approval pipeline</div>
+        <div class="canvas-wrapper"><canvas id="chartStatus"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Order Value by Sales Person</h3>
+        <div class="hint">Top performers by PO value, filtered view</div>
+        <div class="canvas-wrapper"><canvas id="chartSalesPerson"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Orders by Sales Entry Person</h3>
+        <div class="hint">Who is logging orders into the system</div>
+        <div class="canvas-wrapper"><canvas id="chartEntryPerson"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Monthly Order Trend</h3>
+        <div class="hint">Order count & value by PO month</div>
+        <div class="canvas-wrapper"><canvas id="chartTrend"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Orders by Zone</h3>
+        <div class="hint">Geographic distribution</div>
+        <div class="canvas-wrapper"><canvas id="chartZone"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Revenue by Order Type</h3>
+        <div class="hint">Government vs Private split</div>
+        <div class="canvas-wrapper"><canvas id="chartType"></canvas></div>
+      </div>
+    </div>
+
+    <div class="insights-card">
+      <h3>⚠️ Needs Manager Attention</h3>
+      <div id="insightsList"></div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-card">
+    <div class="table-head">
+      <div>
+        <h3>Sales Orders</h3>
+        <div class="count" id="tableCount">0 records</div>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table id="ordersTable">
+        <thead>
+          <tr>
+            <th data-key="uid">UID</th>
+            <th data-key="salesPerson">Sales Person</th>
+            <th data-key="entryPerson">Entry Person</th>
+            <th data-key="customer">Customer</th>
+            <th data-key="orderType">Type</th>
+            <th data-key="amount">PO Amount</th>
+            <th data-key="status">Status</th>
+            <th data-key="broadStatus">Broad Status</th>
+            <th data-key="zone">Zone</th>
+            <th data-key="poDate">PO Date</th>
+            <th data-key="ageDays">Age (days)</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="pagination">
+      <span id="pgInfo">Page 1</span>
+      <div class="pg-btns">
+        <button onclick="changePage(-1)">← Prev</button>
+        <button onclick="changePage(1)">Next →</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="utils.js"></script>
+<script>
+/* ============ AUTH / ROLE GUARD ============ */
+if (!sessionStorage.getItem('loggedInUser')) {
+    window.location.href = 'login.html';
+} else {
+    enforcePageAccess();
+    applySidebarAccess();
+}
+
+/* ============ DATA SOURCE (same feed as main CRM dashboard) ============ */
+const powerAutomateViewUrl = "https://8549b42c711be8948675eefb5cf215.dd.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/05/workflows/b32de4d56db94337b471df29b82c38e2/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=RnRU6dAnci3wp9PMYaajaskcqd6aL0K9fn7-STxchIw";
+
+let rawOrders = [];   // as returned by the API / localStorage
+let rows = [];        // flattened, normalized rows for analytics
+let filteredRows = [];
+let sortKey = 'poDate', sortDir = 'desc';
+let currentPage = 1;
+const PAGE_SIZE = 25;
+let charts = {};
+
+if (window.ChartDataLabels) Chart.register(ChartDataLabels);
+
+/* ---------- helpers ---------- */
+function parseDate(v){
+  if(v===null || v===undefined || v==='') return null;
+
+  // Excel serial date, either as a real number or a numeric string (e.g. "45247")
+  const isNumericSerial = (typeof v === 'number') ||
+    (typeof v === 'string' && v.trim() !== '' && !isNaN(v) && !/[-/]/.test(v));
+  if(isNumericSerial){
+    const serial = Number(v);
+    // sanity range: Excel serials for ~1970-2100 fall roughly between 25000 and 73000
+    if(serial > 20000 && serial < 80000){
+      const d = new Date(Math.round((serial-25569)*86400*1000));
+      return isNaN(d) ? null : d;
+    }
+  }
+
+  const d = new Date(v);
+  return isNaN(d) ? null : d;
+}
+function fmtDate(d){ return d ? d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '—'; }
+function fmtINR(v){ return '₹ ' + (v||0).toLocaleString('en-IN',{minimumFractionDigits:0, maximumFractionDigits:0}); }
+function fmtCompactINR(v){
+  v = v||0;
+  if(v>=10000000) return '₹'+(v/10000000).toFixed(1).replace(/\.0$/,'')+'Cr';
+  if(v>=100000) return '₹'+(v/100000).toFixed(1).replace(/\.0$/,'')+'L';
+  if(v>=1000) return '₹'+(v/1000).toFixed(1).replace(/\.0$/,'')+'K';
+  return '₹'+v.toLocaleString('en-IN');
+}
+function getSafe(obj, keys){
+  if(!obj) return "";
+  for(const k of keys){
+    const found = Object.keys(obj).find(ok => ok.replace(/[\s_()]/g,'').toLowerCase() === k.replace(/[\s_()]/g,'').toLowerCase());
+    if(found && obj[found]!==undefined && obj[found]!==null && obj[found]!=="") return obj[found];
+  }
+  return "";
+}
+function orderTypeLabel(v){
+  if(!v) return "";
+  const s = String(v).toLowerCase();
+  if(s.includes('gov')) return 'Government';
+  if(s.includes('priv')) return 'Private';
+  return String(v);
+}
+
+/* ---------- normalize raw CRM records into flat analytics rows ---------- */
+function buildRows(){
+  rows = (rawOrders||[]).map((o,idx) => {
+    if(!o || !o["Sales Order"]) return null;
+    const h = o["Sales Order"];
+    const amount = parseFloat(getSafe(h,["Price bifurcation / PO Amount","PO Amount"])) || 0;
+    const poDate = parseDate(getSafe(h,["PO Date"]));
+    const status = getSafe(h,["Status"]) || "Submitted";
+    const salesPerson = (getSafe(h,["Sales Person Name"]) || "Unassigned").toString().trim() || "Unassigned";
+    // "Sales Entry Person": the person who keyed the order into the system.
+    // Falls back to Sales Person Name if the source data doesn't track this separately.
+    const entryPerson = (getSafe(h,["Sales Entry Person","Entry Person","Data Entry By","Created By","Entered By"]) || salesPerson).toString().trim() || "Unassigned";
+    const installDate = parseDate(getSafe(h,["Installation Date"]));
+    const workStatus = getSafe(h,["Work Status"]) || "";
+    const ageDays = poDate ? Math.floor((new Date()-poDate)/86400000) : null;
+    const overdue = installDate && installDate < new Date() && !/complet|done|install/i.test(workStatus);
+
+    return {
+      idx,
+      uid: getSafe(h,["UID"]) || `#${idx+1}`,
+      salesPerson, entryPerson,
+      customer: getSafe(h,["Customer Name"]) || "—",
+      orderType: orderTypeLabel(getSafe(h,["Order Type to mention","Order Type"])) || "Other",
+      source: getSafe(h,["Order Source"]) || "Unspecified",
+      amount,
+      status,
+      broadStatus: getSafe(h,["Broad Status"]) || "—",
+      workStatus,
+      zone: getSafe(h,["Zone"]) || "Unspecified",
+      state: getSafe(h,["State"]) || "",
+      poDate,
+      ageDays,
+      overdue,
+      invoiceAmount: parseFloat(getSafe(h,["Invoice Amount"])) || 0,
+      billingDone: getSafe(h,["Billing Done ?"]) || "",
+    };
+  }).filter(Boolean);
+}
+
+/* ---------- populate filter dropdowns ---------- */
+function populateFilters(){
+  const uniq = (fn) => [...new Set(rows.map(fn).filter(v=>v && v!=='—'))].sort();
+  fillSelect('fSalesPerson', uniq(r=>r.salesPerson));
+  fillSelect('fEntryPerson', uniq(r=>r.entryPerson));
+  fillSelect('fStatus', uniq(r=>r.status));
+  fillSelect('fOrderType', uniq(r=>r.orderType));
+  fillSelect('fSource', uniq(r=>r.source));
+  fillSelect('fZone', uniq(r=>r.zone));
+}
+function fillSelect(id, values){
+  const el = document.getElementById(id);
+  const current = el.value;
+  const label = el.parentElement.querySelector('label').textContent;
+  el.innerHTML = `<option value="">All ${label}${label.endsWith('s')?'':'s'}</option>`;
+  values.forEach(v=>{
+    const opt = document.createElement('option');
+    opt.value = v; opt.textContent = v;
+    el.appendChild(opt);
+  });
+  if(values.includes(current)) el.value = current;
+}
+
+/* ---------- filtering ---------- */
+function applyFilters(){
+  const search = document.getElementById('fSearch').value.trim().toLowerCase();
+  const sp = document.getElementById('fSalesPerson').value;
+  const ep = document.getElementById('fEntryPerson').value;
+  const st = document.getElementById('fStatus').value;
+  const ot = document.getElementById('fOrderType').value;
+  const src = document.getElementById('fSource').value;
+  const zn = document.getElementById('fZone').value;
+  const dFrom = document.getElementById('fDateFrom').value ? new Date(document.getElementById('fDateFrom').value) : null;
+  const dTo = document.getElementById('fDateTo').value ? new Date(document.getElementById('fDateTo').value) : null;
+
+  filteredRows = rows.filter(r=>{
+    if(search && !(`${r.uid} ${r.customer} ${r.salesPerson}`.toLowerCase().includes(search))) return false;
+    if(sp && r.salesPerson !== sp) return false;
+    if(ep && r.entryPerson !== ep) return false;
+    if(st && r.status !== st) return false;
+    if(ot && r.orderType !== ot) return false;
+    if(src && r.source !== src) return false;
+    if(zn && r.zone !== zn) return false;
+    if(dFrom && (!r.poDate || r.poDate < dFrom)) return false;
+    if(dTo && (!r.poDate || r.poDate > dTo)) return false;
+    return true;
+  });
+
+  currentPage = 1;
+  renderChips();
+  renderKPIs();
+  renderCharts();
+  renderInsights();
+  renderTable();
+}
+
+function renderChips(){
+  const chips = [];
+  const map = [['fSearch','Search'],['fSalesPerson','Sales Person'],['fEntryPerson','Entry Person'],['fStatus','Status'],['fOrderType','Type'],['fSource','Source'],['fZone','Zone'],['fDateFrom','From'],['fDateTo','To']];
+  map.forEach(([id,label])=>{
+    const v = document.getElementById(id).value;
+    if(v) chips.push(`<div class="chip">${label}: ${v}<span onclick="clearFilter('${id}')">×</span></div>`);
+  });
+  document.getElementById('activeChips').innerHTML = chips.join('');
+}
+function clearFilter(id){ document.getElementById(id).value=''; applyFilters(); }
+function resetFilters(){
+  ['fSearch','fSalesPerson','fEntryPerson','fStatus','fOrderType','fSource','fZone','fDateFrom','fDateTo'].forEach(id=>document.getElementById(id).value='');
+  applyFilters();
+}
+
+/* ---------- KPIs ---------- */
+function renderKPIs(){
+  const total = filteredRows.length;
+  const totalValue = filteredRows.reduce((a,r)=>a+r.amount,0);
+  const approved = filteredRows.filter(r=>r.status==='Approved');
+  const pending = filteredRows.filter(r=>r.status==='Submitted');
+  const rejected = filteredRows.filter(r=>r.status==='Rejected');
+  const approvedValue = approved.reduce((a,r)=>a+r.amount,0);
+  const pendingValue = pending.reduce((a,r)=>a+r.amount,0);
+  const overdueCount = filteredRows.filter(r=>r.overdue).length;
+  const avgOrder = total ? totalValue/total : 0;
+  const winRate = (approved.length+rejected.length) ? Math.round(approved.length/(approved.length+rejected.length)*100) : 0;
+
+  const cards = [
+    {label:'Total Orders', value: total, sub: `${fmtCompactINR(totalValue)} pipeline value`, cls:'c-blue'},
+    {label:'Approved', value: approved.length, sub: fmtCompactINR(approvedValue), cls:'c-green'},
+    {label:'Pending Review', value: pending.length, sub: fmtCompactINR(pendingValue), cls:'c-amber'},
+    {label:'Rejected', value: rejected.length, sub: `${fmtCompactINR(rejected.reduce((a,r)=>a+r.amount,0))}`, cls:'c-red'},
+    {label:'Win Rate', value: winRate+'%', sub: 'Approved vs Approved+Rejected', cls:'c-violet'},
+    {label:'Avg Order Value', value: fmtCompactINR(avgOrder), sub: 'Across filtered orders', cls:'c-blue'},
+    {label:'Overdue Installations', value: overdueCount, sub: 'Past install date, not marked complete', cls:'c-red'},
+  ];
+  document.getElementById('kpiGrid').innerHTML = cards.map(c=>`
+    <div class="kpi ${c.cls}">
+      <div class="label">${c.label}</div>
+      <div class="value">${c.value}</div>
+      <div class="sub">${c.sub}</div>
+    </div>`).join('');
+}
+
+/* ---------- charts ---------- */
+function destroyChart(key){ if(charts[key]){ charts[key].destroy(); delete charts[key]; } }
+
+function renderCharts(){
+  renderStatusChart();
+  renderSalesPersonChart();
+  renderEntryPersonChart();
+  renderTrendChart();
+  renderZoneChart();
+  renderTypeChart();
+}
+
+function renderStatusChart(){
+  destroyChart('status');
+  const counts = {};
+  filteredRows.forEach(r=>counts[r.status]=(counts[r.status]||0)+1);
+  const labels = Object.keys(counts).length ? Object.keys(counts) : ['No Data'];
+  const data = Object.keys(counts).length ? Object.values(counts) : [1];
+  charts.status = new Chart(document.getElementById('chartStatus'), {
+    type:'doughnut',
+    data:{labels, datasets:[{data, backgroundColor:['#3b82f6','#16a34a','#dc2626','#94a3b8','#f59e0b'], borderWidth:0}]},
+    options:{responsive:true, maintainAspectRatio:false, cutout:'68%',
+      plugins:{legend:{position:'right', labels:{boxWidth:8, font:{family:'Inter', size:11}}},
+        datalabels:{color:'#fff', font:{weight:'700', size:11}, formatter:(v,ctx)=>{
+          const t = ctx.dataset.data.reduce((a,b)=>a+b,0); return t? `${v}` : '';
+        }}}}
+  });
+}
+
+function topN(obj, n, valueKeyed){
+  const entries = Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,n);
+  return {labels:entries.map(e=>e[0]), values:entries.map(e=>e[1])};
+}
+
+function renderSalesPersonChart(){
+  destroyChart('sp');
+  const val = {};
+  filteredRows.forEach(r=>val[r.salesPerson]=(val[r.salesPerson]||0)+r.amount);
+  const {labels, values} = topN(val, 8);
+  charts.sp = new Chart(document.getElementById('chartSalesPerson'), {
+    type:'bar',
+    data:{labels: labels.length?labels:['No Data'], datasets:[{data: values.length?values:[0], backgroundColor:'#1e4fd6', borderRadius:4}]},
+    options:{indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, datalabels:{anchor:'end', align:'end', color:'#122c73', font:{weight:'700', size:10}, formatter:v=>fmtCompactINR(v)}},
+      scales:{x:{grid:{borderDash:[4,4]}, ticks:{callback:v=>fmtCompactINR(v)}}, y:{grid:{display:false}, ticks:{font:{size:11}}}}}
+  });
+}
+
+function renderEntryPersonChart(){
+  destroyChart('ep');
+  const cnt = {};
+  filteredRows.forEach(r=>cnt[r.entryPerson]=(cnt[r.entryPerson]||0)+1);
+  const {labels, values} = topN(cnt, 8);
+  charts.ep = new Chart(document.getElementById('chartEntryPerson'), {
+    type:'bar',
+    data:{labels: labels.length?labels:['No Data'], datasets:[{data: values.length?values:[0], backgroundColor:'#8b5cf6', borderRadius:4}]},
+    options:{indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, datalabels:{anchor:'end', align:'end', color:'#4c1d95', font:{weight:'700', size:10}, formatter:v=>v}},
+      scales:{x:{grid:{borderDash:[4,4]}}, y:{grid:{display:false}, ticks:{font:{size:11}}}}}
+  });
+}
+
+function renderTrendChart(){
+  destroyChart('trend');
+  const byMonth = {};
+  filteredRows.forEach(r=>{
+    if(!r.poDate) return;
+    const key = r.poDate.toLocaleString('en-IN',{month:'short', year:'2-digit'});
+    const sortKey = r.poDate.getFullYear()*12+r.poDate.getMonth();
+    if(!byMonth[key]) byMonth[key]={count:0, value:0, sortKey};
+    byMonth[key].count++; byMonth[key].value += r.amount;
+  });
+  const sorted = Object.entries(byMonth).sort((a,b)=>a[1].sortKey-b[1].sortKey);
+  const labels = sorted.map(e=>e[0]);
+  const counts = sorted.map(e=>e[1].count);
+  const values = sorted.map(e=>e[1].value);
+  charts.trend = new Chart(document.getElementById('chartTrend'), {
+    type:'line',
+    data:{labels: labels.length?labels:['No Data'], datasets:[
+      {label:'Orders', data: counts.length?counts:[0], borderColor:'#1e4fd6', backgroundColor:'rgba(37,99,235,.08)', fill:true, tension:.3, yAxisID:'y',
+        datalabels:{align:'top', anchor:'end', color:'#1640b0', font:{weight:'700', size:10}, formatter:v=>v>0?v:''}},
+      {label:'Value', data: values.length?values:[0], borderColor:'#16a34a', tension:.3, yAxisID:'y1', hidden:true,
+        datalabels:{display:false}}
+    ]},
+    options:{responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'top', labels:{boxWidth:8, font:{size:11}}}},
+      scales:{y:{position:'left', grid:{borderDash:[4,4]}}, y1:{position:'right', grid:{display:false}, ticks:{callback:v=>fmtCompactINR(v)}}}}
+  });
+}
+
+function renderZoneChart(){
+  destroyChart('zone');
+  const cnt = {};
+  filteredRows.forEach(r=>cnt[r.zone]=(cnt[r.zone]||0)+1);
+  const {labels, values} = topN(cnt, 8);
+  charts.zone = new Chart(document.getElementById('chartZone'), {
+    type:'bar',
+    data:{labels: labels.length?labels:['No Data'], datasets:[{data: values.length?values:[0], backgroundColor:'#f59e0b', borderRadius:4}]},
+    options:{responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, datalabels:{anchor:'end', align:'end', color:'#92400e', font:{weight:'700', size:10}, formatter:v=>v}},
+      scales:{y:{beginAtZero:true, grid:{borderDash:[4,4]}}, x:{grid:{display:false}, ticks:{font:{size:11}}}}}
+  });
+}
+
+function renderTypeChart(){
+  destroyChart('type');
+  const val = {};
+  filteredRows.forEach(r=>val[r.orderType]=(val[r.orderType]||0)+r.amount);
+  const labels = Object.keys(val).length?Object.keys(val):['No Data'];
+  const data = Object.keys(val).length?Object.values(val):[1];
+  charts.type = new Chart(document.getElementById('chartType'), {
+    type:'doughnut',
+    data:{labels, datasets:[{data, backgroundColor:['#1e4fd6','#f59e0b','#94a3b8'], borderWidth:0}]},
+    options:{responsive:true, maintainAspectRatio:false, cutout:'68%',
+      plugins:{legend:{position:'right', labels:{boxWidth:8, font:{size:11}}},
+        datalabels:{color:'#fff', font:{weight:'700', size:11}, formatter:v=>fmtCompactINR(v)}}}
+  });
+}
+
+/* ---------- insights panel ---------- */
+function renderInsights(){
+  const el = document.getElementById('insightsList');
+  const items = [];
+
+  const overdue = filteredRows.filter(r=>r.overdue).sort((a,b)=>b.amount-a.amount).slice(0,3);
+  overdue.forEach(r=>items.push({icon:'⏰', bg:'#fdecec', color:'#dc2626', title:`${r.uid} — ${r.customer}`, sub:`Installation overdue · ${fmtCompactINR(r.amount)} at stake`}));
+
+  const stalePending = filteredRows.filter(r=>r.status==='Submitted' && r.ageDays!==null && r.ageDays>30).sort((a,b)=>b.ageDays-a.ageDays).slice(0,3);
+  stalePending.forEach(r=>items.push({icon:'🕓', bg:'#fff8e8', color:'#f59e0b', title:`${r.uid} — ${r.customer}`, sub:`Pending review for ${r.ageDays} days`}));
+
+  const bigUninvoiced = filteredRows.filter(r=>r.status==='Approved' && (r.billingDone||'').toLowerCase()!=='yes' && r.amount>0).sort((a,b)=>b.amount-a.amount).slice(0,2);
+  bigUninvoiced.forEach(r=>items.push({icon:'💰', bg:'#eaf0ff', color:'#1e4fd6', title:`${r.uid} — ${r.customer}`, sub:`Approved, billing not done · ${fmtCompactINR(r.amount)}`}));
+
+  if(items.length===0){
+    el.innerHTML = `<div class="insight-empty">Nothing needs attention in the current filter view 🎉</div>`;
+    return;
+  }
+  el.innerHTML = items.slice(0,8).map(i=>`
+    <div class="insight-item">
+      <div class="insight-icon" style="background:${i.bg}; color:${i.color};">${i.icon}</div>
+      <div class="insight-body"><b>${i.title}</b><span>${i.sub}</span></div>
+    </div>`).join('');
+}
+
+/* ---------- table ---------- */
+function renderTable(){
+  const sorted = [...filteredRows].sort((a,b)=>{
+    let va=a[sortKey], vb=b[sortKey];
+    if(va instanceof Date || vb instanceof Date){ va=va?va.getTime():0; vb=vb?vb.getTime():0; }
+    if(typeof va === 'string') va=va.toLowerCase();
+    if(typeof vb === 'string') vb=vb.toLowerCase();
+    if(va<vb) return sortDir==='asc'?-1:1;
+    if(va>vb) return sortDir==='asc'?1:-1;
+    return 0;
+  });
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length/PAGE_SIZE));
+  currentPage = Math.min(currentPage, totalPages);
+  const pageRows = sorted.slice((currentPage-1)*PAGE_SIZE, currentPage*PAGE_SIZE);
+
+  document.getElementById('tableCount').textContent = `${sorted.length} record${sorted.length!==1?'s':''}`;
+  document.getElementById('pgInfo').textContent = `Page ${currentPage} of ${totalPages}`;
+
+  const badgeClass = s => s==='Approved'?'badge-approved':s==='Rejected'?'badge-rejected':s==='Draft'?'badge-draft':'badge-submitted';
+
+  document.getElementById('tableBody').innerHTML = pageRows.length ? pageRows.map(r=>`
+    <tr class="${r.overdue?'row-overdue':''}">
+      <td><b>${r.uid}</b></td>
+      <td>${r.salesPerson}</td>
+      <td>${r.entryPerson}</td>
+      <td>${r.customer}</td>
+      <td>${r.orderType}</td>
+      <td>${fmtINR(r.amount)}</td>
+      <td><span class="badge ${badgeClass(r.status)}">${r.status}</span></td>
+      <td>${r.broadStatus}</td>
+      <td>${r.zone}</td>
+      <td>${fmtDate(r.poDate)}</td>
+      <td>${r.ageDays ?? '—'}${r.overdue?' ⚠️':''}</td>
+    </tr>`).join('') : `<tr class="empty-row"><td colspan="11">No orders match the current filters.</td></tr>`;
+
+  document.querySelectorAll('#ordersTable thead th').forEach(th=>{
+    th.classList.toggle('sorted', th.dataset.key===sortKey);
+    th.classList.toggle('asc', th.dataset.key===sortKey && sortDir==='asc');
+  });
+}
+
+document.querySelectorAll('#ordersTable thead th').forEach(th=>{
+  th.addEventListener('click', ()=>{
+    const key = th.dataset.key;
+    if(sortKey===key) sortDir = sortDir==='asc'?'desc':'asc';
+    else { sortKey = key; sortDir = 'asc'; }
+    renderTable();
+  });
+});
+
+function changePage(delta){
+  currentPage += delta;
+  if(currentPage<1) currentPage=1;
+  renderTable();
+}
+
+/* ---------- export ---------- */
+function exportFilteredCSV(){
+  if(!filteredRows.length){ alert('No data to export for the current filter.'); return; }
+  const headers = ['UID','Sales Person','Sales Entry Person','Customer','Order Type','Order Source','PO Amount','Status','Broad Status','Zone','State','PO Date','Age (days)','Overdue Installation','Invoice Amount','Billing Done'];
+  const csvRows = [headers.join(',')];
+  filteredRows.forEach(r=>{
+    const row = [r.uid, r.salesPerson, r.entryPerson, r.customer, r.orderType, r.source, r.amount, r.status, r.broadStatus, r.zone, r.state, fmtDate(r.poDate), r.ageDays??'', r.overdue?'Yes':'No', r.invoiceAmount, r.billingDone];
+    csvRows.push(row.map(f=>{
+      let s = (f===undefined||f===null)?'':String(f);
+      s = s.replace(/"/g,'""');
+      return `"${s}"`;
+    }).join(','));
+  });
+  const blob = new Blob(['\uFEFF'+csvRows.join('\n')], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `Manager_Dashboard_Export_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+}
+
+/* ---------- data loading ---------- */
+async function refreshData(){
+  const pill = document.getElementById('syncPill');
+  const text = document.getElementById('syncText');
+  text.textContent = 'Syncing…';
+  try{
+    const res = await fetch(powerAutomateViewUrl);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const body = await res.text();
+    if(!body.trim()) throw new Error('Empty response');
+    const data = JSON.parse(body);
+    rawOrders = Array.isArray(data) ? data : (data.value || []);
+    localStorage.setItem('crmOrders', JSON.stringify(rawOrders));
+    pill.className = 'sync-pill live';
+    text.textContent = `Live · ${rawOrders.length} orders`;
+  }catch(e){
+    console.warn('Live sync failed, using cached data:', e.message);
+    try{ rawOrders = JSON.parse(localStorage.getItem('crmOrders')) || []; }catch(_){ rawOrders = []; }
+    pill.className = 'sync-pill cached';
+    text.textContent = rawOrders.length ? `Cached · ${rawOrders.length} orders` : 'No data available';
+  }
+  buildRows();
+  populateFilters();
+  applyFilters();
+}
+
+refreshData();
+</script>
+</body>
+</html>
