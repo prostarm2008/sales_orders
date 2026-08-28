@@ -299,6 +299,17 @@ if (!sessionStorage.getItem('loggedInUser')) {
     }
 }
 
+/* ============ DASHBOARD SCRIPT (isolated in its own scope) ============ */
+// Wrapped in an IIFE so every `let`/`const`/`function` below lives in a
+// private closure instead of the page's global scope. Classic <script> tags
+// share one global scope, and a `let`/`const` (or, in some cases, a
+// `function`) declared with the same name in ANY other script on the page —
+// another <script> block, something injected by a CMS/template, a stray
+// duplicate paste — throws a page-wide "Identifier '...' has already been
+// declared" SyntaxError that silently kills this entire script before a
+// single line of it runs. Isolating it here means this dashboard can no
+// longer be broken by naming collisions elsewhere on the page.
+(function(){
 /* ============ DATA SOURCE (same feed as main CRM dashboard) ============ */
 const powerAutomateViewUrl = "https://8549b42c711be8948675eefb5cf215.dd.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/05/workflows/b32de4d56db94337b471df29b82c38e2/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=RnRU6dAnci3wp9PMYaajaskcqd6aL0K9fn7-STxchIw";
 
@@ -810,6 +821,17 @@ try {
 } catch (e) {
   console.error('refreshData() failed to start:', e);
 }
+
+// Inline onclick="..." attributes in the HTML run in the global scope, so
+// the handful of functions the buttons/table/pagination call need an
+// explicit escape hatch out of this closure. Everything else stays private.
+window.refreshData = refreshData;
+window.exportFilteredCSV = exportFilteredCSV;
+window.resetFilters = resetFilters;
+window.changePage = changePage;
+window.clearFilter = clearFilter;
+
+})(); // end dashboard IIFE
 </script>
 </body>
 </html>
