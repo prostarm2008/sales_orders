@@ -285,8 +285,18 @@ tbody tr.row-overdue{background:#fdecec;}
 if (!sessionStorage.getItem('loggedInUser')) {
     window.location.href = 'login.html';
 } else {
-    enforcePageAccess();
-    applySidebarAccess();
+    // Guarded: if utils.js failed to load (404, wrong relative path, blocked
+    // script, etc.) these two calls would throw a ReferenceError and — since
+    // this whole block is one <script>, uncaught errors here would stop
+    // EVERY line below it from ever running, including refreshData() at the
+    // bottom. That would look exactly like "data not coming into the page"
+    // even though the real cause is upstream of any data fetch.
+    try {
+        enforcePageAccess();
+        applySidebarAccess();
+    } catch (e) {
+        console.error('Auth/sidebar guard failed (utils.js missing or broken?) — continuing so the dashboard can still load data:', e);
+    }
 }
 
 /* ============ DATA SOURCE (same feed as main CRM dashboard) ============ */
@@ -357,9 +367,14 @@ function orderTypeLabel(v){
 
 /* ---------- normalize raw CRM records into flat analytics rows ---------- */
 function buildRows(){
+  let droppedNoShape = 0;
   rows = (rawOrders||[]).map((o,idx) => {
-    if(!o || !o["Sales Order"]) return null;
-    const h = o["Sales Order"];
+    if(!o) return null;
+    // Accept either the nested API shape ({"Sales Order": {...fields}})
+    // or a flat record ({...fields} directly) — if the flow's response
+    // shape changes upstream, we shouldn't silently drop every row.
+    const h = o["Sales Order"] || o;
+    if(!h || typeof h !== 'object' || Object.keys(h).length===0){ droppedNoShape++; return null; }
     const amount = parseFloat(getSafe(h,["Price bifurcation / PO Amount","PO Amount"])) || 0;
     const poDate = parseDate(getSafe(h,["PO Date"]));
     const status = getSafe(h,["Status"]) || "Submitted";
@@ -392,6 +407,11 @@ function buildRows(){
       billingDone: getSafe(h,["Billing Done ?"]) || "",
     };
   }).filter(Boolean);
+  if (rawOrders && rawOrders.length && rows.length === 0) {
+    console.warn(`buildRows: received ${rawOrders.length} raw record(s) from the API but 0 survived normalization` +
+      (droppedNoShape ? ` — ${droppedNoShape} had no usable object shape.` : '.') +
+      ' Sample raw record:', rawOrders[0]);
+  }
 }
 
 /* ---------- populate filter dropdowns ---------- */
@@ -763,12 +783,16 @@ async function refreshData(){
     if(!body.trim()) throw new Error('Empty response');
     const data = JSON.parse(body);
     rawOrders = Array.isArray(data) ? data : (data.value || []);
+    console.log(`refreshData: fetched ${rawOrders.length} raw record(s) from Power Automate.`, rawOrders[0]);
     localStorage.setItem('crmOrders', JSON.stringify(rawOrders));
     pill.className = 'sync-pill live';
     text.textContent = `Live · ${rawOrders.length} orders`;
   }catch(e){
     clearTimeout(timeoutId);
     const isTimeout = e.name === 'AbortError';
+    // A CORS failure, an expired/invalid SAS signature, or the flow itself
+    // returning an error all land here with a generic "Failed to fetch" —
+    // open DevTools > Network to see the actual HTTP status / CORS error.
     console.warn(isTimeout ? 'Live sync timed out, using cached data' : 'Live sync failed, using cached data:', e.message || e);
     if (!hadCache) {
       try{ rawOrders = JSON.parse(localStorage.getItem('crmOrders')) || []; }catch(_){ rawOrders = []; }
