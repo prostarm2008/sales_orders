@@ -68,8 +68,8 @@
 </div>
 
 <div id="syncBanner" class="sync-banner warn">
-    <span>⚠️</span>
-    <span>Showing locally cached data — live sync with Power Automate failed.</span>
+    <span id="syncIcon">⚠️</span>
+    <span id="syncMainText">Showing locally cached data — live sync with Power Automate failed.</span>
     <span class="sync-detail" id="syncDetail"></span>
 </div>
 
@@ -100,13 +100,30 @@
     const powerAutomateUpdateUrl = "https://8549b42c711be8948675eefb5cf215.dd.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/23/workflows/939bec4d95ba4d5983187f8b75b034e0/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=B7UyGivjIHH-8dltPNOUXTz0Kj2mbXN-Tdqr2JE_sOo"; 
     const powerAutomateViewUrl = "https://8549b42c711be8948675eefb5cf215.dd.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/05/workflows/b32de4d56db94337b471df29b82c38e2/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=RnRU6dAnci3wp9PMYaajaskcqd6aL0K9fn7-STxchIw";
 
+    function loadCachedOrders() {
+        try { return JSON.parse(localStorage.getItem('crmOrders')) || []; } catch(e) { return []; }
+    }
+
     async function loadOrders() {
-        if (!powerAutomateViewUrl) {
-            ordersData = JSON.parse(localStorage.getItem('crmOrders')) || [];
-            return;
+        // 1) Show cached data immediately instead of leaving the board blank
+        //    while the Power Automate flow is still spinning up.
+        ordersData = loadCachedOrders();
+        const hadCache = ordersData.length > 0;
+        if (hadCache) {
+            renderBoard();
+            showSyncBanner({ message: 'REFRESHING_CACHE' });
         }
+
+        if (!powerAutomateViewUrl) return;
+
+        // 2) Fetch live data in the background with a timeout, so a slow flow
+        //    doesn't leave the user staring at a spinner indefinitely.
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s cap
+
         try {
-            const response = await fetch(powerAutomateViewUrl);
+            const response = await fetch(powerAutomateViewUrl, { signal: controller.signal });
+            clearTimeout(timeoutId);
             if (!response.ok) {
                 const bodyText = await response.text().catch(() => '');
                 throw new Error(`HTTP ${response.status} ${response.statusText}${bodyText ? ' — ' + bodyText.slice(0, 200) : ''}`);
@@ -125,20 +142,41 @@
             localStorage.setItem('crmOrders', JSON.stringify(ordersData));
             hideSyncBanner();
         } catch (err) {
-            console.error("Cloud fetch failed, falling back to local cache", err);
-            showSyncBanner(err);
-            ordersData = JSON.parse(localStorage.getItem('crmOrders')) || [];
+            clearTimeout(timeoutId);
+            const isTimeout = err.name === 'AbortError';
+            console.warn(isTimeout ? "Cloud fetch timed out, keeping cached data" : "Cloud fetch failed, falling back to local cache", err);
+            showSyncBanner(isTimeout ? new Error('TIMEOUT') : err);
+            if (!hadCache) ordersData = loadCachedOrders();
         }
     }
 
     function showSyncBanner(err) {
         const banner = document.getElementById('syncBanner');
         const detail = document.getElementById('syncDetail');
+        const icon = document.getElementById('syncIcon');
+        const mainText = document.getElementById('syncMainText');
         if (!banner) return;
         const msg = err.message || String(err);
         const isLikelyCors = err instanceof TypeError || /Failed to fetch|NetworkError|Load failed/i.test(msg);
         const isEmptyBody = msg === 'EMPTY_BODY';
-        if (isLikelyCors) {
+        const isTimeout = msg === 'TIMEOUT';
+        const isRefreshing = msg === 'REFRESHING_CACHE';
+
+        banner.classList.remove('info', 'warn', 'error');
+        if (isRefreshing) {
+            banner.classList.add('info');
+            icon.textContent = '🔄';
+            mainText.textContent = 'Loaded your last synced data — refreshing from Power Automate in the background.';
+            detail.innerText = '';
+            banner.classList.add('show');
+            return;
+        }
+        banner.classList.add('warn');
+        icon.textContent = '⚠️';
+        mainText.textContent = 'Showing locally cached data — live sync with Power Automate failed.';
+        if (isTimeout) {
+            detail.innerText = "(The flow took too long to respond — showing your last synced data instead.)";
+        } else if (isLikelyCors) {
             detail.innerText = "(Likely a CORS issue — the flow needs an Access-Control-Allow-Origin response header. See console for details.)";
         } else if (isEmptyBody) {
             detail.innerText = "(The flow responded with an empty body — it needs a 'Response' action at the end that returns the orders array as JSON.)";

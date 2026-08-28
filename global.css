@@ -402,6 +402,7 @@ body.has-sidebar { padding-left: 260px; }
     border: 1px solid transparent;
 }
 .sync-banner.show { display: flex; }
+.sync-banner.info { background: var(--primary-light); color: #173e9e; border-color: #cbdaff; }
 .sync-banner.warn { background: var(--warning-light); color: #92400e; border-color: #fbe3ad; }
 .sync-banner.error { background: var(--danger-light); color: #9f1d1d; border-color: #f6c6c6; }
 .sync-banner .sync-detail { font-weight: 500; opacity: 0.85; }

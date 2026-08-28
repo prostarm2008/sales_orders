@@ -128,8 +128,9 @@
     </div>
     <div class="master-nav-actions">
         <a href="settings.html" style="text-decoration:none; color:var(--text-main); font-weight: 500; font-size: 14px;">
-            <span id="greeting">Welcome, User</span> 
-		</a>
+            <span id="greeting">Welcome, User</span> ⚙️
+        </a>
+        <button class="btn btn-danger" onclick="logout()" style="padding: 6px 12px; margin-left: 10px; border:none; border-radius:6px; cursor:pointer;">Sign Out</button>
     </div>
 </div>
 
@@ -140,8 +141,8 @@
     </div>
 
     <div id="syncBanner" class="sync-banner warn">
-        <span>⚠️</span>
-        <span>Showing locally cached data — live sync with Power Automate failed.</span>
+        <span id="syncIcon">⚠️</span>
+        <span id="syncMainText">Showing locally cached data — live sync with Power Automate failed.</span>
         <span class="sync-detail" id="syncDetail"></span>
     </div>
 
@@ -764,8 +765,17 @@
     let sourceChartInstance = null;
     let trendChartInstance = null;
 
-    if (window.ChartDataLabels) Chart.register(ChartDataLabels);
-    Chart.defaults.set('plugins.datalabels', { display: false }); // opt-in per chart below
+    // Guarded: if the Chart.js CDN script failed to load (blocked, offline,
+    // slow network), referencing the bare `Chart` global here would throw
+    // and silently kill the rest of this script — including the login
+    // check and all data loading below. Charts degrade gracefully; nothing
+    // else on this page should depend on them.
+    try {
+        if (window.Chart && window.ChartDataLabels) Chart.register(ChartDataLabels);
+        if (window.Chart) Chart.defaults.set('plugins.datalabels', { display: false }); // opt-in per chart below
+    } catch (e) {
+        console.warn('Chart.js setup failed — charts may not render:', e);
+    }
 
     // Compact ₹ formatter for chart labels, e.g. 1234567 -> ₹12.3L
     function formatCompactINR(val) {
@@ -846,16 +856,43 @@
     async function initCloudFetch() {
         if (!powerAutomateViewUrl) {
             try { ordersData = JSON.parse(localStorage.getItem('crmOrders')) || []; } catch(e) { ordersData = []; }
-            loadDashboardData(); renderTable();
+            safeRender('dashboard stats', loadDashboardData);
+            safeRender('orders table', renderTable);
             return;
         }
-        
+
+        // 1) Show cached data immediately instead of leaving the page blank
+        //    while the Power Automate flow is still spinning up. Parsing the
+        //    cache and rendering it are kept separate: a render bug must
+        //    never be swallowed as if the cache were simply missing.
+        let hadCache = false;
+        let cached = [];
         try {
+            cached = JSON.parse(localStorage.getItem('crmOrders')) || [];
+        } catch(e) { cached = []; }
+
+        if (cached.length) {
+            ordersData = cached;
+            hadCache = true;
+            safeRender('dashboard stats (cache)', loadDashboardData);
+            safeRender('orders table (cache)', renderTable);
+            showSyncBanner({ message: 'REFRESHING_CACHE' });
+        }
+
+        if (!hadCache) {
             document.getElementById('emptyMessage').style.display = 'block';
             document.getElementById('emptyMessage').innerText = "Fetching live data from cloud...";
             document.getElementById('ordersTable').style.display = 'none';
+        }
 
-            const response = await fetch(powerAutomateViewUrl);
+        // 2) Fetch live data in the background with a timeout, so a slow flow
+        //    doesn't leave the user staring at a spinner indefinitely.
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s cap
+
+        try {
+            const response = await fetch(powerAutomateViewUrl, { signal: controller.signal });
+            clearTimeout(timeoutId);
 
             if (!response.ok) {
                 const bodyText = await response.text().catch(() => '');
@@ -872,28 +909,59 @@
             localStorage.setItem('crmOrders', JSON.stringify(ordersData)); 
             
             hideSyncBanner();
-            loadDashboardData(); renderTable();
+            safeRender('dashboard stats (live)', loadDashboardData);
+            safeRender('orders table (live)', renderTable);
         } catch (err) {
-            console.error("Cloud fetch failed, falling back to local cache", err);
-            showSyncBanner(err);
-            try { ordersData = JSON.parse(localStorage.getItem('crmOrders')) || []; } catch(e) { ordersData = []; }
-            loadDashboardData(); renderTable();
+            clearTimeout(timeoutId);
+            const isTimeout = err.name === 'AbortError';
+            console.warn(isTimeout ? "Cloud fetch timed out, keeping cached data" : "Cloud fetch failed, falling back to local cache", err);
+            showSyncBanner(isTimeout ? new Error('TIMEOUT') : err);
+            if (!hadCache) {
+                try { ordersData = JSON.parse(localStorage.getItem('crmOrders')) || []; } catch(e) { ordersData = []; }
+                safeRender('dashboard stats (fallback)', loadDashboardData);
+                safeRender('orders table (fallback)', renderTable);
+            }
         }
+    }
+
+    function safeRender(label, fn) {
+        try { fn(); } catch (e) { console.error(`Render step "${label}" failed:`, e); }
     }
 
     function showSyncBanner(err) {
         const banner = document.getElementById('syncBanner');
         const detail = document.getElementById('syncDetail');
+        const icon = document.getElementById('syncIcon');
+        const mainText = document.getElementById('syncMainText');
         if (!banner) return;
         const msg = err.message || String(err);
         const isLikelyCors = err instanceof TypeError || /Failed to fetch|NetworkError|Load failed/i.test(msg);
         const isEmptyBody = msg === 'EMPTY_BODY';
-        if (isLikelyCors) {
-            detail.innerText = "(Likely a CORS issue — the flow needs an Access-Control-Allow-Origin response header. See console for details.)";
-        } else if (isEmptyBody) {
-            detail.innerText = "(The flow responded with an empty body — it needs a 'Response' action at the end that returns the orders array as JSON.)";
+        const isTimeout = msg === 'TIMEOUT';
+        const isRefreshing = msg === 'REFRESHING_CACHE';
+
+        banner.classList.remove('info', 'warn', 'error');
+        if (isRefreshing) {
+            banner.classList.add('info');
+            icon.textContent = '🔄';
+            mainText.textContent = 'Loaded your last synced data — refreshing from Power Automate in the background.';
+            detail.innerText = '';
+        } else if (isTimeout) {
+            banner.classList.add('warn');
+            icon.textContent = '⚠️';
+            mainText.textContent = 'Showing locally cached data — live sync with Power Automate failed.';
+            detail.innerText = "(The flow took too long to respond — showing your last synced data instead.)";
         } else {
-            detail.innerText = `(${msg})`;
+            banner.classList.add('warn');
+            icon.textContent = '⚠️';
+            mainText.textContent = 'Showing locally cached data — live sync with Power Automate failed.';
+            if (isLikelyCors) {
+                detail.innerText = "(Likely a CORS issue — the flow needs an Access-Control-Allow-Origin response header. See console for details.)";
+            } else if (isEmptyBody) {
+                detail.innerText = "(The flow responded with an empty body — it needs a 'Response' action at the end that returns the orders array as JSON.)";
+            } else {
+                detail.innerText = `(${msg})`;
+            }
         }
         banner.classList.add('show');
     }
@@ -1018,12 +1086,12 @@
         document.getElementById('kpi-pending-value').innerText = `₹ ${pendingValue.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
         document.getElementById('kpi-rejected-value').innerText = `₹ ${rejectedValue.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
 
-        renderStatusChart(statusCounts); 
-        renderRevenueChart(typeRevenue);
-        renderSalesPersonChart(salesPersonCounts);
-        renderZoneChart(zoneCounts);
-        renderSourceChart(sourceCounts);
-        renderTrendChart(monthCounts);
+        safeRender('status chart', () => renderStatusChart(statusCounts));
+        safeRender('revenue chart', () => renderRevenueChart(typeRevenue));
+        safeRender('sales person chart', () => renderSalesPersonChart(salesPersonCounts));
+        safeRender('zone chart', () => renderZoneChart(zoneCounts));
+        safeRender('source chart', () => renderSourceChart(sourceCounts));
+        safeRender('trend chart', () => renderTrendChart(monthCounts));
     }
 
     function renderStatusChart(data) {
@@ -1720,8 +1788,8 @@
             if (response.ok) {
                 alert("Changes Saved and Synced to Cloud Successfully!");
                 closeModal('editModal');
-                renderTable(); 
-                loadDashboardData(); 
+                safeRender('orders table', renderTable);
+                safeRender('dashboard stats', loadDashboardData);
             } else {
                 const errText = await response.text();
                 throw new Error(`HTTP ${response.status}: ${errText.slice(0, 100)}...`);

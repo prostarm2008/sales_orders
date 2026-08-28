@@ -300,7 +300,16 @@ let currentPage = 1;
 const PAGE_SIZE = 25;
 let charts = {};
 
-if (window.ChartDataLabels) Chart.register(ChartDataLabels);
+// Guarded: if the Chart.js CDN script failed to load (blocked, offline, slow
+// network), referencing the bare `Chart` global here would throw and silently
+// kill the rest of this script — including the refreshData() call at the very
+// bottom that actually loads the page's data. Charts degrade gracefully;
+// data loading must not depend on them.
+try {
+  if (window.Chart && window.ChartDataLabels) Chart.register(ChartDataLabels);
+} catch (e) {
+  console.warn('Chart.js plugin registration failed — charts may not render:', e);
+}
 
 /* ---------- helpers ---------- */
 function parseDate(v){
@@ -434,11 +443,18 @@ function applyFilters(){
   });
 
   currentPage = 1;
-  renderChips();
-  renderKPIs();
-  renderCharts();
-  renderInsights();
-  renderTable();
+  // Each render step is isolated: a failure in one (e.g. a chart library
+  // hiccup) must never prevent the others — especially the data table —
+  // from still rendering.
+  safeRender('chips', renderChips);
+  safeRender('KPIs', renderKPIs);
+  safeRender('charts', renderCharts);
+  safeRender('insights', renderInsights);
+  safeRender('table', renderTable);
+}
+
+function safeRender(label, fn){
+  try { fn(); } catch(e) { console.error(`Render step "${label}" failed:`, e); }
 }
 
 function renderChips(){
@@ -490,12 +506,12 @@ function renderKPIs(){
 function destroyChart(key){ if(charts[key]){ charts[key].destroy(); delete charts[key]; } }
 
 function renderCharts(){
-  renderStatusChart();
-  renderSalesPersonChart();
-  renderEntryPersonChart();
-  renderTrendChart();
-  renderZoneChart();
-  renderTypeChart();
+  safeRender('status chart', renderStatusChart);
+  safeRender('sales person chart', renderSalesPersonChart);
+  safeRender('entry person chart', renderEntryPersonChart);
+  safeRender('trend chart', renderTrendChart);
+  safeRender('zone chart', renderZoneChart);
+  safeRender('type chart', renderTypeChart);
 }
 
 function renderStatusChart(){
@@ -711,9 +727,37 @@ function exportFilteredCSV(){
 async function refreshData(){
   const pill = document.getElementById('syncPill');
   const text = document.getElementById('syncText');
-  text.textContent = 'Syncing…';
+
+  // 1) Render cached data immediately so the dashboard isn't blank while
+  //    the Power Automate flow is still spinning up. The JSON.parse and the
+  //    render calls are separated: a bad cache blob must not look like a
+  //    render bug, and a render bug must not look like a missing cache.
+  let hadCache = false;
+  let cached = [];
+  try {
+    cached = JSON.parse(localStorage.getItem('crmOrders')) || [];
+  } catch(_) { cached = []; }
+
+  if (cached.length) {
+    rawOrders = cached;
+    hadCache = true;
+    pill.className = 'sync-pill cached';
+    text.textContent = `Cached · ${rawOrders.length} orders — refreshing…`;
+    safeRender('buildRows (cache)', buildRows);
+    safeRender('populateFilters (cache)', populateFilters);
+    safeRender('applyFilters (cache)', applyFilters);
+  } else {
+    text.textContent = 'Syncing…';
+  }
+
+  // 2) Fetch live data in the background with a timeout, so a slow flow
+  //    doesn't leave the user staring at a spinner indefinitely.
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s cap
+
   try{
-    const res = await fetch(powerAutomateViewUrl);
+    const res = await fetch(powerAutomateViewUrl, { signal: controller.signal });
+    clearTimeout(timeoutId);
     if(!res.ok) throw new Error('HTTP '+res.status);
     const body = await res.text();
     if(!body.trim()) throw new Error('Empty response');
@@ -723,17 +767,25 @@ async function refreshData(){
     pill.className = 'sync-pill live';
     text.textContent = `Live · ${rawOrders.length} orders`;
   }catch(e){
-    console.warn('Live sync failed, using cached data:', e.message);
-    try{ rawOrders = JSON.parse(localStorage.getItem('crmOrders')) || []; }catch(_){ rawOrders = []; }
+    clearTimeout(timeoutId);
+    const isTimeout = e.name === 'AbortError';
+    console.warn(isTimeout ? 'Live sync timed out, using cached data' : 'Live sync failed, using cached data:', e.message || e);
+    if (!hadCache) {
+      try{ rawOrders = JSON.parse(localStorage.getItem('crmOrders')) || []; }catch(_){ rawOrders = []; }
+    }
     pill.className = 'sync-pill cached';
-    text.textContent = rawOrders.length ? `Cached · ${rawOrders.length} orders` : 'No data available';
+    text.textContent = rawOrders.length ? `Cached · ${rawOrders.length} orders${isTimeout ? ' (sync timed out)' : ''}` : 'No data available';
   }
-  buildRows();
-  populateFilters();
-  applyFilters();
+  safeRender('buildRows (final)', buildRows);
+  safeRender('populateFilters (final)', populateFilters);
+  safeRender('applyFilters (final)', applyFilters);
 }
 
-refreshData();
+try {
+  refreshData();
+} catch (e) {
+  console.error('refreshData() failed to start:', e);
+}
 </script>
 </body>
 </html>
