@@ -1627,7 +1627,7 @@
         if(index === "" || !ordersData[index]) return;
         
         const order = ordersData[index]["Sales Order"];
-        const val = id => document.getElementById(id).value === "" ? null : document.getElementById(id).value;
+        const val = id => document.getElementById(id).value;
         const currentParentUID = val('m-uid'); 
         
         order["Sales Person Name"] = val('m-salesPerson'); order["Status"] = val('m-status'); order["Customer Name"] = val('m-customerName'); order["Contact Person"] = val('m-contactPerson'); order["Contact Details"] = val('m-contactDetails'); order["Email"] = val('m-email'); 
