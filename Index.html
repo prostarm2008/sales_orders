@@ -428,6 +428,35 @@
 <script src="utils.js"></script>
 
 <script>
+	const powerAutomateUploadUrl = "https://8549b42c711be8948675eefb5cf215.dd.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/27/workflows/8c217484ea3e46b38fc6b7f07450d5b3/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=vzyUiHpw_NEp_W1E5Opu-5gz4RFGLSMcCD6nNFchKzk";
+
+    function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result.split(',')[1]);
+            reader.onerror = error => reject(error);
+        });
+    }
+
+    async function uploadDocumentToFlow(file, uid, docId, docName) {
+        const fileBase64 = await fileToBase64(file);
+        const payload = {
+            uid: uid,
+            docId: docId,
+            docName: docName,
+            fileName: file.name,
+            fileContent: fileBase64
+        };
+        const response = await fetch(powerAutomateUploadUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) throw new Error("Upload failed");
+        return await response.json();
+    }
+	///// Above is new code added
     function updateZone() {
         const stateSelect = document.getElementById("state");
         const zoneInput = document.getElementById("zone");
@@ -689,14 +718,33 @@ async function submitForm() {
 
         for (const row of document.querySelectorAll('#childTable tbody tr')) {
             const fileInput = row.querySelector('.child-attachment');
+            const rowDocId = row.querySelector('.child-doc-id').value;
+            const docName = row.querySelector('.child-doc-name').value || "Document";
             let attachmentValue = "None";
+
             if (fileInput && fileInput.files.length > 0) {
-                attachmentValue = fileInput.files[0].name; 
+                const file = fileInput.files[0];
+                try {
+                    if (submitBtn) submitBtn.innerText = `Uploading ${file.name}...`;
+                    const uploadResult = await uploadDocumentToFlow(file, currentParentUID, rowDocId, docName);
+                    attachmentValue = uploadResult.fileUrl || file.name;
+                } catch (uploadErr) {
+                    console.error("Upload failed", uploadErr);
+                    alert(`File upload failed for ${file.name}. Submission halted.`);
+                    if (submitBtn) {
+                        submitBtn.innerText = "Submit Full Order"; 
+                        submitBtn.disabled = false;
+                        submitBtn.style.pointerEvents = "auto";
+                        submitBtn.style.opacity = "1";
+                    }
+                    return; // Stop the save process
+                }
             }
+
             payload.SalesChildTable.push({ 
-                "Document ID": row.querySelector('.child-doc-id').value, 
-                "Parent_UID D": currentParentUID, // FIXED: Now exactly matches Power Automate schema
-                "Document Name": row.querySelector('.child-doc-name').value || "", 
+                "Document ID": rowDocId, 
+                "Parent_UID D": currentParentUID, 
+                "Document Name": docName, 
                 "Attachment": attachmentValue 
             });
         }
