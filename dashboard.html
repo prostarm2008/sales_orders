@@ -139,12 +139,6 @@
         <p>Here is your daily pipeline overview.</p>
     </div>
 
-    <div id="syncBanner" class="sync-banner warn">
-        <span id="syncIcon">⚠️</span>
-        <span id="syncMainText">Showing locally cached data — live sync with Power Automate failed.</span>
-        <span class="sync-detail" id="syncDetail"></span>
-    </div>
-
     <!-- MAIN TABS NAVIGATION -->
     <div class="tabs-header">
         <button class="tab-btn active" onclick="openTab(event, 'tab-dashboard', 'main-tab-content')">📊 Dashboard</button>
@@ -764,19 +758,18 @@
     let sourceChartInstance = null;
     let trendChartInstance = null;
 
-    // Guarded: if the Chart.js CDN script failed to load (blocked, offline,
-    // slow network), referencing the bare `Chart` global here would throw
-    // and silently kill the rest of this script — including the login
-    // check and all data loading below. Charts degrade gracefully; nothing
-    // else on this page should depend on them.
+    // IMPORTANT: Insert your actual Power Automate Flow URLs here
+    const powerAutomateViewUrl = "https://8549b42c711be8948675eefb5cf215.dd.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/05/workflows/b32de4d56db94337b471df29b82c38e2/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=RnRU6dAnci3wp9PMYaajaskcqd6aL0K9fn7-STxchIw"; 
+    const powerAutomateUpdateUrl = "https://8549b42c711be8948675eefb5cf215.dd.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/23/workflows/939bec4d95ba4d5983187f8b75b034e0/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=B7UyGivjIHH-8dltPNOUXTz0Kj2mbXN-Tdqr2JE_sOo"; 
+    const powerAutomateUploadUrl = "https://8549b42c711be8948675eefb5cf215.dd.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/27/workflows/8c217484ea3e46b38fc6b7f07450d5b3/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=vzyUiHpw_NEp_W1E5Opu-5gz4RFGLSMcCD6nNFchKzk"; // REPLACE WITH NEW FILE UPLOAD URL
+
     try {
         if (window.Chart && window.ChartDataLabels) Chart.register(ChartDataLabels);
-        if (window.Chart) Chart.defaults.set('plugins.datalabels', { display: false }); // opt-in per chart below
+        if (window.Chart) Chart.defaults.set('plugins.datalabels', { display: false });
     } catch (e) {
-        console.warn('Chart.js setup failed — charts may not render:', e);
+        console.warn('Chart.js setup failed:', e);
     }
 
-    // Compact ₹ formatter for chart labels, e.g. 1234567 -> ₹12.3L
     function formatCompactINR(val) {
         if (val >= 10000000) return '₹' + (val / 10000000).toFixed(1).replace(/\.0$/, '') + 'Cr';
         if (val >= 100000) return '₹' + (val / 100000).toFixed(1).replace(/\.0$/, '') + 'L';
@@ -784,10 +777,38 @@
         return '₹' + val.toLocaleString('en-IN');
     }
 
-    const powerAutomateViewUrl = "https://8549b42c711be8948675eefb5cf215.dd.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/05/workflows/b32de4d56db94337b471df29b82c38e2/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=RnRU6dAnci3wp9PMYaajaskcqd6aL0K9fn7-STxchIw"; 
-    const powerAutomateUpdateUrl = "https://8549b42c711be8948675eefb5cf215.dd.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/23/workflows/939bec4d95ba4d5983187f8b75b034e0/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=B7UyGivjIHH-8dltPNOUXTz0Kj2mbXN-Tdqr2JE_sOo"; 
+    // --- File Upload Helper Functions ---
+    function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result.split(',')[1]);
+            reader.onerror = error => reject(error);
+        });
+    }
 
-    // Universal Utility to safely extract values even if columns are renamed
+    async function uploadDocumentToFlow(file, uid, docId, docName) {
+        const fileBase64 = await fileToBase64(file);
+        const payload = {
+            uid: uid,
+            docId: docId,
+            docName: docName,
+            fileName: file.name,
+            fileContent: fileBase64
+        };
+        const response = await fetch(powerAutomateUploadUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(`Upload failed (${response.status}): ${errText}`);
+        }
+        return await response.json();
+    }
+    // ------------------------------------
+
     const getSafe = (obj, keys) => {
         if (!obj) return "";
         for (let k of keys) {
@@ -801,7 +822,6 @@
         return "";
     };
 
-    // Universal Array Finder - Fixes the DocumentsTable mismatch and unpacks Power Automate's {"value": []} wrapper
     const extractDataArray = (orderObj, preferredKey, keywordTriggers) => {
         if (!orderObj) return [];
         let data = orderObj[preferredKey];
@@ -810,8 +830,6 @@
             for (let k in orderObj) {
                 let cleanK = k.replace(/[\s_]/g, '').toLowerCase();
                 let cleanPref = preferredKey.replace(/[\s_]/g, '').toLowerCase();
-                
-                // Explicitly link code keys to your specific Excel Table Names
                 if (cleanK === cleanPref || 
                    (cleanPref === "saleschildtable" && (cleanK === "documentstable" || cleanK === "documents")) ||
                    (cleanPref === "products" && cleanK === "productstable") ||
@@ -821,19 +839,15 @@
             }
         }
 
-        // Unpack stringified arrays from Power Automate
         if (typeof data === 'string' && data.trim().startsWith('[')) {
             try { data = JSON.parse(data); } catch(e) {}
         }
-
-        // CRITICAL FIX: Unpack Power Automate's "value" wrapper for Excel Tables
         if (data && typeof data === 'object' && !Array.isArray(data) && data.value && Array.isArray(data.value)) {
             data = data.value;
         }
 
         if (Array.isArray(data) && data.length > 0) return data;
 
-        // Deep search fallback
         for (let k in orderObj) {
             let val = orderObj[k];
             if (typeof val === 'string' && val.trim().startsWith('[')) {
@@ -852,122 +866,36 @@
         return [];
     };
 
+    // Cleaned up Live-Only Fetch Call
     async function initCloudFetch() {
-        if (!powerAutomateViewUrl) {
-            try { ordersData = JSON.parse(localStorage.getItem('crmOrders')) || []; } catch(e) { ordersData = []; }
-            safeRender('dashboard stats', loadDashboardData);
-            safeRender('orders table', renderTable);
-            return;
-        }
+        if (!powerAutomateViewUrl) return;
 
-        // 1) Show cached data immediately instead of leaving the page blank
-        //    while the Power Automate flow is still spinning up. Parsing the
-        //    cache and rendering it are kept separate: a render bug must
-        //    never be swallowed as if the cache were simply missing.
-        let hadCache = false;
-        let cached = [];
-        try {
-            cached = JSON.parse(localStorage.getItem('crmOrders')) || [];
-        } catch(e) { cached = []; }
-
-        if (cached.length) {
-            ordersData = cached;
-            hadCache = true;
-            safeRender('dashboard stats (cache)', loadDashboardData);
-            safeRender('orders table (cache)', renderTable);
-            showSyncBanner({ message: 'REFRESHING_CACHE' });
-        }
-
-        if (!hadCache) {
-            document.getElementById('emptyMessage').style.display = 'block';
-            document.getElementById('emptyMessage').innerText = "Fetching live data from cloud...";
-            document.getElementById('ordersTable').style.display = 'none';
-        }
-
-        // 2) Fetch live data in the background with a timeout, so a slow flow
-        //    doesn't leave the user staring at a spinner indefinitely.
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s cap
+        document.getElementById('emptyMessage').style.display = 'block';
+        document.getElementById('emptyMessage').innerText = "Fetching live data from cloud...";
+        document.getElementById('ordersTable').style.display = 'none';
 
         try {
-            const response = await fetch(powerAutomateViewUrl, { signal: controller.signal });
-            clearTimeout(timeoutId);
+            const response = await fetch(powerAutomateViewUrl);
 
-            if (!response.ok) {
-                const bodyText = await response.text().catch(() => '');
-                throw new Error(`HTTP ${response.status} ${response.statusText}${bodyText ? ' — ' + bodyText.slice(0, 200) : ''}`);
-            }
+            if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
 
             const bodyText = await response.text();
-            if (!bodyText.trim()) throw new Error('EMPTY_BODY');
+            if (!bodyText.trim()) throw new Error('Empty response from server');
 
-            let data;
-            try { data = JSON.parse(bodyText); } catch (parseErr) { throw new Error(`Flow returned non-JSON content: ${bodyText.slice(0, 200)}`); }
-
+            let data = JSON.parse(bodyText);
             ordersData = Array.isArray(data) ? data : (data.value || []);
-            localStorage.setItem('crmOrders', JSON.stringify(ordersData)); 
             
-            hideSyncBanner();
-            safeRender('dashboard stats (live)', loadDashboardData);
-            safeRender('orders table (live)', renderTable);
+            safeRender('dashboard stats', loadDashboardData);
+            safeRender('orders table', renderTable);
         } catch (err) {
-            clearTimeout(timeoutId);
-            const isTimeout = err.name === 'AbortError';
-            console.warn(isTimeout ? "Cloud fetch timed out, keeping cached data" : "Cloud fetch failed, falling back to local cache", err);
-            showSyncBanner(isTimeout ? new Error('TIMEOUT') : err);
-            if (!hadCache) {
-                try { ordersData = JSON.parse(localStorage.getItem('crmOrders')) || []; } catch(e) { ordersData = []; }
-                safeRender('dashboard stats (fallback)', loadDashboardData);
-                safeRender('orders table (fallback)', renderTable);
-            }
+            console.error("Cloud fetch failed", err);
+            document.getElementById('emptyMessage').innerText = "Failed to load live data. Please refresh the page.";
+            document.getElementById('emptyMessage').style.color = "red";
         }
     }
 
     function safeRender(label, fn) {
         try { fn(); } catch (e) { console.error(`Render step "${label}" failed:`, e); }
-    }
-
-    function showSyncBanner(err) {
-        const banner = document.getElementById('syncBanner');
-        const detail = document.getElementById('syncDetail');
-        const icon = document.getElementById('syncIcon');
-        const mainText = document.getElementById('syncMainText');
-        if (!banner) return;
-        const msg = err.message || String(err);
-        const isLikelyCors = err instanceof TypeError || /Failed to fetch|NetworkError|Load failed/i.test(msg);
-        const isEmptyBody = msg === 'EMPTY_BODY';
-        const isTimeout = msg === 'TIMEOUT';
-        const isRefreshing = msg === 'REFRESHING_CACHE';
-
-        banner.classList.remove('info', 'warn', 'error');
-        if (isRefreshing) {
-            banner.classList.add('info');
-            icon.textContent = '🔄';
-            mainText.textContent = 'Loaded your last synced data — refreshing from Power Automate in the background.';
-            detail.innerText = '';
-        } else if (isTimeout) {
-            banner.classList.add('warn');
-            icon.textContent = '⚠️';
-            mainText.textContent = 'Showing locally cached data — live sync with Power Automate failed.';
-            detail.innerText = "(The flow took too long to respond — showing your last synced data instead.)";
-        } else {
-            banner.classList.add('warn');
-            icon.textContent = '⚠️';
-            mainText.textContent = 'Showing locally cached data — live sync with Power Automate failed.';
-            if (isLikelyCors) {
-                detail.innerText = "(Likely a CORS issue — the flow needs an Access-Control-Allow-Origin response header. See console for details.)";
-            } else if (isEmptyBody) {
-                detail.innerText = "(The flow responded with an empty body — it needs a 'Response' action at the end that returns the orders array as JSON.)";
-            } else {
-                detail.innerText = `(${msg})`;
-            }
-        }
-        banner.classList.add('show');
-    }
-
-    function hideSyncBanner() {
-        const banner = document.getElementById('syncBanner');
-        if (banner) banner.classList.remove('show');
     }
 
     function mUpdateZone() {
@@ -1438,9 +1366,12 @@
                 let docName = getSafe(item, ["Document Name"]);
                 let attachmentData = getSafe(item, ["Attachment"]);
 
-                let attachHtml = (attachmentData && attachmentData.data) 
-                    ? `<a href="${attachmentData.data}" download="${attachmentData.name}" style="color:var(--primary); font-weight:600; text-decoration:none;">📥 Download ${attachmentData.name}</a>` 
-                    : ((typeof attachmentData === 'string' && attachmentData !== "None" && attachmentData !== "") ? attachmentData : "None");
+                // Updated to handle live URLs from Power Automate
+                let attachHtml = (attachmentData && typeof attachmentData === 'string' && attachmentData.startsWith('http')) 
+                    ? `<a href="${attachmentData}" target="_blank" style="color:var(--primary); font-weight:600; text-decoration:none;">🔗 Open Attached Document</a>` 
+                    : (attachmentData && attachmentData.data) 
+                        ? `<a href="${attachmentData.data}" download="${attachmentData.name}" style="color:var(--primary); font-weight:600; text-decoration:none;">📥 Download ${attachmentData.name}</a>` 
+                        : ((typeof attachmentData === 'string' && attachmentData !== "None" && attachmentData !== "") ? attachmentData : "None");
                 
                 dHtml += `<tr><td>${docId || '-'}</td><td>${docName || '-'}</td><td>${attachHtml}</td></tr>`;
             });
@@ -1584,7 +1515,7 @@
                 const attachmentData = getSafe(item, ["Attachment"]);
                 
                 const row = document.createElement('tr');
-                let label = (attachmentData && attachmentData.name) ? attachmentData.name : (typeof attachmentData === 'string' && attachmentData !== "None" && attachmentData !== "" ? attachmentData : "None");
+                let label = (attachmentData && attachmentData.name) ? attachmentData.name : (typeof attachmentData === 'string' && attachmentData !== "None" && attachmentData !== "" ? "Attached Document" : "None");
                 row.innerHTML = `
                     <td class="td-id"><input type="text" class="m-child-doc-id input-bare" value="${docId}" readonly></td>
                     <td class="td-doc"><select class="m-child-doc-name" style="width: 100%;"><option value="" disabled>Select Document...</option><option value="PO" ${docName === 'PO' ? 'selected' : ''}>PO</option><option value="Approval Mail" ${docName === 'Approval Mail' ? 'selected' : ''}>Approval Mail</option><option value="Price BOQ" ${docName === 'Price BOQ' ? 'selected' : ''}>Price BOQ</option><option value="Tech.BOQ" ${docName === 'Tech.BOQ' ? 'selected' : ''}>Tech.BOQ</option></select></td>
@@ -1742,6 +1673,7 @@
             "Remark": row.querySelector('.m-rem-text').value 
         }));
 
+        // --- File Upload Integration for childTable ---
         const legacyTable = extractDataArray(ordersData[index], "SalesChildTable", ["document", "attachment"]);
         const rows = document.querySelectorAll('#m-childTable tbody tr:not(.empty-row)');
         
@@ -1750,21 +1682,38 @@
             const fileInput = row.querySelector('.m-child-attachment');
             const currentFileName = row.querySelector('.cur-file').innerText;
             const rowDocId = row.querySelector('.m-child-doc-id').value;
+            const docName = row.querySelector('.m-child-doc-name').value || "Document";
             let finalAttachment = "None";
 
-            if (fileInput && fileInput.files.length > 0) finalAttachment = fileInput.files[0].name; 
-            else if (currentFileName !== "None") {
+            if (fileInput && fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                try {
+                    document.querySelector('.save-btn').innerText = `Uploading ${file.name}...`;
+                    document.querySelector('.save-btn').disabled = true;
+                    
+                    const uploadResult = await uploadDocumentToFlow(file, currentParentUID, rowDocId, docName);
+                    finalAttachment = uploadResult.fileUrl || file.name;
+                    
+                } catch (uploadErr) {
+                    console.error(`Failed to upload ${file.name}:`, uploadErr);
+                    alert(`File upload failed for ${file.name}. Progress halted.`);
+                    document.querySelector('.save-btn').innerText = "Save Changes";
+                    document.querySelector('.save-btn').disabled = false;
+                    return; // Stop the save process
+                }
+            } else if (currentFileName !== "None") {
                 const legacyRecord = legacyTable.find(c => c && (getSafe(c, ["Document ID", "Product ID"]) === rowDocId));
                 if (legacyRecord) finalAttachment = getSafe(legacyRecord, ["Attachment"]);
             }
             newChildData.push({ 
                 "Document ID": rowDocId, 
-                "Parent_UID D": currentParentUID, // STRICT PA SCHEMA
-                "Document Name": row.querySelector('.m-child-doc-name').value || "", 
+                "Parent_UID D": currentParentUID,
+                "Document Name": docName, 
                 "Attachment": finalAttachment 
             });
         }
         ordersData[index]["SalesChildTable"] = newChildData;
+        // ----------------------------------------------
         
         const updatePayload = {
             "Sales Order": ordersData[index]["Sales Order"],
@@ -1773,10 +1722,8 @@
             "RemarksTable": ordersData[index]["RemarksTable"]
         };
 
-        const powerAutomateUpdateUrl = "https://8549b42c711be8948675eefb5cf215.dd.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/23/workflows/939bec4d95ba4d5983187f8b75b034e0/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=B7UyGivjIHH-8dltPNOUXTz0Kj2mbXN-Tdqr2JE_sOo"; 
-
         try {
-            localStorage.setItem('crmOrders', JSON.stringify(ordersData));
+            document.querySelector('.save-btn').innerText = "Saving to Database...";
             
             const response = await fetch(powerAutomateUpdateUrl, {
                 method: 'POST',
@@ -1787,15 +1734,17 @@
             if (response.ok) {
                 alert("Changes Saved and Synced to Cloud Successfully!");
                 closeModal('editModal');
-                safeRender('orders table', renderTable);
-                safeRender('dashboard stats', loadDashboardData);
+                initCloudFetch(); // Re-fetch the live data
             } else {
                 const errText = await response.text();
                 throw new Error(`HTTP ${response.status}: ${errText.slice(0, 100)}...`);
             }
         } catch(e) { 
             console.error("Cloud sync failed:", e);
-            alert(`Microsoft Power Automate rejected the Edit submission.\n\nReason: ${e.message}\n\nPlease ensure you have filled out the required numeric fields.`); 
+            alert(`Save failed.\n\nReason: ${e.message}`); 
+        } finally {
+            const btn = document.querySelector('.save-btn');
+            if(btn) { btn.innerText = "Save Changes"; btn.disabled = false; }
         }
     }
 
