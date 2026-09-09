@@ -1366,12 +1366,14 @@
                 let docName = getSafe(item, ["Document Name"]);
                 let attachmentData = getSafe(item, ["Attachment"]);
 
-                // Updated to handle live URLs from Power Automate
-                let attachHtml = (attachmentData && typeof attachmentData === 'string' && attachmentData.startsWith('http')) 
-                    ? `<a href="${attachmentData}" target="_blank" style="color:var(--primary); font-weight:600; text-decoration:none;">🔗 Open Attached Document</a>` 
-                    : (attachmentData && attachmentData.data) 
-                        ? `<a href="${attachmentData.data}" download="${attachmentData.name}" style="color:var(--primary); font-weight:600; text-decoration:none;">📥 Download ${attachmentData.name}</a>` 
-                        : ((typeof attachmentData === 'string' && attachmentData !== "None" && attachmentData !== "") ? attachmentData : "None");
+                let attachHtml = "None";
+                if (attachmentData) {
+                    if (typeof attachmentData === 'string' && attachmentData.startsWith('http')) {
+                        attachHtml = `<a href="${attachmentData}" target="_blank" style="display:inline-block; padding:6px 12px; background:#e0e7ff; color:var(--primary); border-radius:6px; font-weight:600; text-decoration:none;">🖼️ Open File</a>`;
+                    } else if (attachmentData !== "None" && attachmentData !== "") {
+                        attachHtml = `<span style="color:#64748b;">${attachmentData}</span>`;
+                    }
+                }
                 
                 dHtml += `<tr><td>${docId || '-'}</td><td>${docName || '-'}</td><td>${attachHtml}</td></tr>`;
             });
@@ -1515,11 +1517,24 @@
                 const attachmentData = getSafe(item, ["Attachment"]);
                 
                 const row = document.createElement('tr');
-                let label = (attachmentData && attachmentData.name) ? attachmentData.name : (typeof attachmentData === 'string' && attachmentData !== "None" && attachmentData !== "" ? "Attached Document" : "None");
+                let attachLabel = "None";
+                if (attachmentData && typeof attachmentData === 'string') {
+                    if (attachmentData.startsWith('http')) {
+                        attachLabel = `<a href="${attachmentData}" target="_blank" class="cur-file" style="color:var(--primary); text-decoration:underline;">View Attached File</a>`;
+                    } else if (attachmentData !== "None" && attachmentData !== "") {
+                        attachLabel = `<span class="cur-file" style="color:#0f172a;">${attachmentData}</span>`;
+                    }
+                } else {
+                    attachLabel = `<span class="cur-file" style="color:#0f172a;">None</span>`;
+                }
+
                 row.innerHTML = `
                     <td class="td-id"><input type="text" class="m-child-doc-id input-bare" value="${docId}" readonly></td>
                     <td class="td-doc"><select class="m-child-doc-name" style="width: 100%;"><option value="" disabled>Select Document...</option><option value="PO" ${docName === 'PO' ? 'selected' : ''}>PO</option><option value="Approval Mail" ${docName === 'Approval Mail' ? 'selected' : ''}>Approval Mail</option><option value="Price BOQ" ${docName === 'Price BOQ' ? 'selected' : ''}>Price BOQ</option><option value="Tech.BOQ" ${docName === 'Tech.BOQ' ? 'selected' : ''}>Tech.BOQ</option></select></td>
-                    <td class="td-file"><div style="margin-bottom: 6px; font-size: 11px; color: #64748b;">Saved: <strong class="cur-file" style="color: #0f172a;">${label}</strong></div><div class="custom-file-upload"><label class="custom-file-btn"><input type="file" class="m-child-attachment hidden-file-input" onchange="updateFileName(this)"> Upload New</label><span class="file-name-display">No new file</span></div></td>
+                    <td class="td-file">
+                        <div style="margin-bottom: 6px; font-size: 11px; color: #64748b;">Saved: <strong>${attachLabel}</strong></div>
+                        <div class="custom-file-upload"><label class="custom-file-btn"><input type="file" class="m-child-attachment hidden-file-input" onchange="updateFileName(this)"> Upload New</label><span class="file-name-display">No new file</span></div>
+                    </td>
                 `;
                 document.querySelector('#m-childTable tbody').appendChild(row);
             });
