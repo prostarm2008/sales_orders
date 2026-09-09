@@ -1536,7 +1536,7 @@
                 let attachLabel = "None";
                 if (attachmentData && typeof attachmentData === 'string') {
                     if (attachmentData.startsWith('http')) {
-                        attachLabel = `<button type="button" onclick="openPreview('${attachmentData}')" style="background:none; border:none; color:var(--primary); text-decoration:underline; font-weight:600; cursor:pointer; padding:0;">View Attached File</button>`;
+                        attachLabel = `<button type="button" class="cur-file" onclick="openPreview('${attachmentData}')" style="background:none; border:none; color:var(--primary); text-decoration:underline; font-weight:600; cursor:pointer; padding:0;">View Attached File</button>`;
                     } else if (attachmentData !== "None" && attachmentData !== "") {
                         attachLabel = `<span class="cur-file" style="color:#0f172a;">${attachmentData}</span>`;
                     }
