@@ -749,6 +749,22 @@
     </div>
 </div>
 
+<!-- ================= IMAGE PREVIEW MODAL ================= -->
+<div id="imagePreviewModal" class="modal" style="z-index: 999;">
+    <div class="modal-content" style="max-width: 800px; text-align: center; padding: 24px;">
+        <span class="close-btn" onclick="closeModal('imagePreviewModal')">&times;</span>
+        <h2 class="modal-header" style="text-align: left;">Document Preview</h2>
+        
+        <!-- The iframe loads the Microsoft viewer directly inside your portal -->
+        <iframe id="previewFrame" style="width: 100%; height: 60vh; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; margin-bottom: 20px;"></iframe>
+        
+        <div style="text-align: right;">
+            <!-- Direct Download Button -->
+            <a id="downloadBtn" href="#" class="btn-submit" style="text-decoration: none; display: inline-block;">📥 Direct Download</a>
+        </div>
+    </div>
+</div>
+
 <script>
     let ordersData = [];
     let statusChartInstance = null;
@@ -1369,7 +1385,7 @@
                 let attachHtml = "None";
                 if (attachmentData) {
                     if (typeof attachmentData === 'string' && attachmentData.startsWith('http')) {
-                        attachHtml = `<a href="${attachmentData}" target="_blank" style="display:inline-block; padding:6px 12px; background:#e0e7ff; color:var(--primary); border-radius:6px; font-weight:600; text-decoration:none;">🖼️ Open File</a>`;
+                        attachHtml = `<button type="button" onclick="openPreview('${attachmentData}')" style="padding:6px 12px; background:#e0e7ff; color:var(--primary); border:none; border-radius:6px; font-weight:600; cursor:pointer;">🖼️ Preview & Download</button>`;
                     } else if (attachmentData !== "None" && attachmentData !== "") {
                         attachHtml = `<span style="color:#64748b;">${attachmentData}</span>`;
                     }
@@ -1520,7 +1536,7 @@
                 let attachLabel = "None";
                 if (attachmentData && typeof attachmentData === 'string') {
                     if (attachmentData.startsWith('http')) {
-                        attachLabel = `<a href="${attachmentData}" target="_blank" class="cur-file" style="color:var(--primary); text-decoration:underline;">View Attached File</a>`;
+                        attachLabel = `<button type="button" onclick="openPreview('${attachmentData}')" style="background:none; border:none; color:var(--primary); text-decoration:underline; font-weight:600; cursor:pointer; padding:0;">View Attached File</button>`;
                     } else if (attachmentData !== "None" && attachmentData !== "") {
                         attachLabel = `<span class="cur-file" style="color:#0f172a;">${attachmentData}</span>`;
                     }
@@ -1771,7 +1787,19 @@
     window.onclick = function(event) {
         if (event.target == document.getElementById('viewModal')) closeModal('viewModal');
         if (event.target == document.getElementById('editModal')) closeModal('editModal');
+        if (event.target == document.getElementById('imagePreviewModal')) closeModal('imagePreviewModal');
     }
+	
+	function openPreview(url) {
+        // If the URL already has parameters (?), use '&', otherwise use '?'
+        let embedUrl = url.includes('?') ? url + '&action=embedview' : url + '?action=embedview';
+        let downloadUrl = url.includes('?') ? url + '&download=1' : url + '?download=1';
+        
+        document.getElementById('previewFrame').src = embedUrl;
+        document.getElementById('downloadBtn').href = downloadUrl;
+        document.getElementById('imagePreviewModal').style.display = 'block';
+    }
+	
 </script>
 </body>
 </html>
