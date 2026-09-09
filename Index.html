@@ -727,7 +727,12 @@ async function submitForm() {
                 try {
                     if (submitBtn) submitBtn.innerText = `Uploading ${file.name}...`;
                     const uploadResult = await uploadDocumentToFlow(file, currentParentUID, rowDocId, docName);
-                    attachmentValue = uploadResult.fileUrl || file.name;
+
+					if (!uploadResult.fileUrl || uploadResult.fileUrl.trim() === "") {
+						alert(`Warning: ${file.name} uploaded, but Power Automate did not return a valid link. Check your Flow Response step.`);
+					}
+
+					finalAttachment = uploadResult.fileUrl || file.name;
                 } catch (uploadErr) {
                     console.error("Upload failed", uploadErr);
                     alert(`File upload failed for ${file.name}. Submission halted.`);

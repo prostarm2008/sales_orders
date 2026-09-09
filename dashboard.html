@@ -1707,7 +1707,12 @@
                     document.querySelector('.save-btn').disabled = true;
                     
                     const uploadResult = await uploadDocumentToFlow(file, currentParentUID, rowDocId, docName);
-                    finalAttachment = uploadResult.fileUrl || file.name;
+
+					if (!uploadResult.fileUrl || uploadResult.fileUrl.trim() === "") {
+						alert(`Warning: ${file.name} uploaded, but Power Automate did not return a valid link. Check your Flow Response step.`);
+					}
+
+					finalAttachment = uploadResult.fileUrl || file.name;
                     
                 } catch (uploadErr) {
                     console.error(`Failed to upload ${file.name}:`, uploadErr);
