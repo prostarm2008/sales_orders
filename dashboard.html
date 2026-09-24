@@ -906,8 +906,11 @@
 
             let data = JSON.parse(bodyText);
             ordersData = Array.isArray(data) ? data : (data.value || []);
-            
-            safeRender('dashboard stats', loadDashboardData);
+        
+            // Sync live data to cache so print-order.html can read it
+            localStorage.setItem('crmOrders', JSON.stringify(ordersData));
+        
+        safeRender('dashboard stats', loadDashboardData);
             safeRender('orders table', renderTable);
         } catch (err) {
             console.error("Cloud fetch failed", err);
@@ -1539,7 +1542,7 @@
                 const attachmentData = getSafe(item, ["Attachment"]);
                 
                 const row = document.createElement('tr');
-                let attachLabel = "None";
+                let attachLabel = `<span class="cur-file" style="color:#0f172a;">None</span>`;
                 if (attachmentData && typeof attachmentData === 'string') {
                     if (attachmentData.startsWith('http')) {
                         attachLabel = `<button type="button" class="cur-file" onclick="openPreview('${attachmentData}')" style="background:none; border:none; color:var(--primary); text-decoration:underline; font-weight:600; cursor:pointer; padding:0;">View Attached File</button>`;
@@ -1668,25 +1671,25 @@
         const currentParentUID = val('m-uid'); 
         
         order["Sales Person Name"] = val('m-salesPerson'); order["Status"] = val('m-status'); order["Customer Name"] = val('m-customerName'); order["Contact Person"] = val('m-contactPerson'); order["Contact Details"] = val('m-contactDetails'); order["Email"] = val('m-email'); 
-        order["PO Number"] = val('m-poNumber'); order["PO Date"] = val('m-poDate'); order["Order Type to mention"] = val('m-orderType'); order["Order Source"] = val('m-orderSource'); order["Segments"] = val('m-segment'); order["FY"] = val('m-fy'); order["ProstarM Branch"] = val('m-prostarmBranch');
+        order["PO Number"] = val('m-poNumber'); order["PO Date"] = val('m-poDate') || ""; order["Order Type to mention"] = val('m-orderType'); order["Order Source"] = val('m-orderSource'); order["Segments"] = val('m-segment'); order["FY"] = val('m-fy'); order["ProstarM Branch"] = val('m-prostarmBranch');
         
         order["Bill to GST Number"] = val('m-billToGst'); order["Ship to GST Number"] = val('m-shipToGst');
-        order["Price bifurcation / PO Amount"] = val('m-poAmount'); order["Installation Scope"] = val('m-installScope');
-        order["Retension / BG/Not required"] = val('m-retentionBg'); order["% Of BG Retension"] = val('m-bgRetentionPercent');
-        order["Buyback Status"] = val('m-buyback'); order["Buyback Configuration"] = val('m-buybackConfig'); order["Buyback Amount"] = val('m-buybackAmount'); order["Buyback Bill ?"] = val('m-buybackBill');
+        order["Price bifurcation / PO Amount"] = val('m-poAmount') || ""; order["Installation Scope"] = val('m-installScope');
+        order["Retension / BG/Not required"] = val('m-retentionBg'); order["% Of BG Retension"] = val('m-bgRetentionPercent') || "";
+        order["Buyback Status"] = val('m-buyback'); order["Buyback Configuration"] = val('m-buybackConfig'); order["Buyback Amount"] = val('m-buybackAmount') || ""; order["Buyback Bill ?"] = val('m-buybackBill');
         
-        order["AMC Mentioned In PO"] = val('m-amcMentioned'); order["AMC Duration (Year)"] = val('m-amcDuration'); order["PM Required during warranty period"] = val('m-pmRequired'); order["Payments Terms"] = val('m-paymentTerms'); order["Payment Status"] = val('m-paymentStatus');
+        order["AMC Mentioned In PO"] = val('m-amcMentioned'); order["AMC Duration (Year)"] = val('m-amcDuration') || ""; order["PM Required during warranty period"] = val('m-pmRequired'); order["Payments Terms"] = val('m-paymentTerms'); order["Payment Status"] = val('m-paymentStatus');
         
-        order["BOQ / Product details"] = val('m-boq'); order["Billing Address"] = val('m-billing'); order["Delivery Address"] = val('m-delivery'); order["Installation Address"] = val('m-installAdd'); order["Location"] = val('m-location'); order["Pin code"] = val('m-pin'); order["Dispatch Type"] = val('m-dispatch'); order["Pickup Location"] = val('m-pickup');
-        order["To be Completed On"] = val('m-toBeCompletedOn'); order["Region /Zonal Office"] = val('m-regionZoneOffice'); order["State"] = val('m-state'); order["Zone"] = val('m-zone');
+        order["BOQ / Product details"] = val('m-boq'); order["Billing Address"] = val('m-billing'); order["Delivery Address"] = val('m-delivery'); order["Installation Address"] = val('m-installAdd'); order["Location"] = val('m-location'); order["Pin code"] = val('m-pin') || ""; order["Dispatch Type"] = val('m-dispatch'); order["Pickup Location"] = val('m-pickup');
+        order["To be Completed On"] = val('m-toBeCompletedOn') || ""; order["Region /Zonal Office"] = val('m-regionZoneOffice'); order["State"] = val('m-state'); order["Zone"] = val('m-zone');
 
-        order["Broad Status"] = val('m-broadStatus'); order["Work Status"] = val('m-workStatus'); order["Delivery Date"] = val('m-deliveryDate'); order["Installation Date"] = val('m-installationDate');
-        order["Invoice Number"] = val('m-invoiceNumber'); order["Invoice Date"] = val('m-invoiceDate'); order["Basic Amount"] = val('m-invoiceBasicAmount'); order["Invoice Amount"] = val('m-invoiceAmount'); order["Billing Done ?"] = val('m-billingDone');
+        order["Broad Status"] = val('m-broadStatus'); order["Work Status"] = val('m-workStatus'); order["Delivery Date"] = val('m-deliveryDate') || ""; order["Installation Date"] = val('m-installationDate') || "";
+        order["Invoice Number"] = val('m-invoiceNumber'); order["Invoice Date"] = val('m-invoiceDate') || ""; order["Basic Amount"] = val('m-invoiceBasicAmount') || ""; order["Invoice Amount"] = val('m-invoiceAmount') || ""; order["Billing Done ?"] = val('m-billingDone');
 
-        order["Bill Submision Status"] = val('m-billSubmissionStatus'); order["Comp Certificate"] = val('m-compCertificate'); order["ETA"] = val('m-eta'); order["Product Serial Number"] = val('m-productSerialNumber');
-        order["Engineer Name"] = val('m-engineerName'); order["Material Received Date"] = val('m-materialReceivedDate'); order["Status Age"] = val('m-statusAge'); 
+        order["Bill Submision Status"] = val('m-billSubmissionStatus'); order["Comp Certificate"] = val('m-compCertificate'); order["ETA"] = val('m-eta') || ""; order["Product Serial Number"] = val('m-productSerialNumber');
+        order["Engineer Name"] = val('m-engineerName'); order["Material Received Date"] = val('m-materialReceivedDate') || ""; order["Status Age"] = val('m-statusAge'); 
 
-        ordersData[index]["Products"] = Array.from(document.querySelectorAll('#m-productTable tbody tr:not(.empty-row)')).map(row => ({
+        ordersData[index]["ProductsTable"] = Array.from(document.querySelectorAll('#m-productTable tbody tr:not(.empty-row)')).map(row => ({
             "Product ID": row.querySelector('.m-prod-id').value, 
             "Parent UID P": currentParentUID, // STRICT PA SCHEMA
             "Product Name": row.querySelector('.m-prod-name').value || "Unnamed", 
@@ -1759,19 +1762,28 @@
         
         const updatePayload = {
             "Sales Order": ordersData[index]["Sales Order"],
-            "Products": ordersData[index]["Products"],
+            "Products": ordersData[index]["ProductsTable"],
             "SalesChildTable": ordersData[index]["SalesChildTable"],
             "RemarksTable": ordersData[index]["RemarksTable"]
         };
 
         try {
             document.querySelector('.save-btn').innerText = "Saving to Database...";
-            
-            const response = await fetch(powerAutomateUpdateUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updatePayload)
-            });
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s cap
+
+            let response;
+            try {
+                response = await fetch(powerAutomateUpdateUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatePayload),
+                    signal: controller.signal
+                });
+            } finally {
+                clearTimeout(timeoutId);
+            }
 
             if (response.ok) {
                 alert("Changes Saved and Synced to Cloud Successfully!");
@@ -1781,9 +1793,12 @@
                 const errText = await response.text();
                 throw new Error(`HTTP ${response.status}: ${errText.slice(0, 100)}...`);
             }
-        } catch(e) { 
+        } catch(e) {
+            const isTimeout = e.name === 'AbortError';
             console.error("Cloud sync failed:", e);
-            alert(`Save failed.\n\nReason: ${e.message}`); 
+            alert(isTimeout
+                ? "Save timed out after 30s.\n\nThe Power Automate flow may have failed partway through (e.g. a newly added product/document/remark row that doesn't exist in Excel yet — \"Update a row\" can't create new rows). Check the flow's run history for the exact error."
+                : `Save failed.\n\nReason: ${e.message}`);
         } finally {
             const btn = document.querySelector('.save-btn');
             if(btn) { btn.innerText = "Save Changes"; btn.disabled = false; }

@@ -4,36 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Onboarding Team - Kanban Board</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="global.css">
     <style>
-        body { height: 100vh; display: flex; flex-direction: column; }
-        
-        /* Kanban Layout */
-        .board { display: flex; gap: 20px; flex: 1; overflow-x: auto; padding-bottom: 20px; }
-        .column { background: #f1f5f9; border-radius: 12px; width: 320px; min-width: 320px; display: flex; flex-direction: column; border: 1px solid var(--border); }
-        .column-header { padding: 16px; font-weight: 700; font-size: 15px; border-bottom: 2px solid var(--border); display: flex; justify-content: space-between; align-items: center;}
-        
-        /* Column Specific Colors */
-        .col-draft .column-header { border-bottom-color: #94a3b8; color: #475569; }
-        .col-submitted .column-header { border-bottom-color: var(--primary); color: #173e9e; }
-        .col-approved .column-header { border-bottom-color: #16a34a; color: #065f46; }
-        .col-rejected .column-header { border-bottom-color: #dc2626; color: #9f1d1d; }
-        
-        .card-list { padding: 12px; flex: 1; overflow-y: auto; min-height: 200px;}
-        
-        /* Kanban Card */
-        .k-card { background: var(--card-bg); padding: 16px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 12px; cursor: grab; transition: transform 0.1s, box-shadow 0.1s;}
-        .k-card:active { cursor: grabbing; transform: scale(0.98); box-shadow: 0 4px 6px rgba(0,0,0,0.1);}
-        .k-card:hover { border-color: #cbd5e1; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        
-        .card-uid { font-size: 12px; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
-        .card-customer { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
-        .card-details { font-size: 13px; color: var(--text-muted); display: flex; justify-content: space-between;}
-        .card-salesperson { font-size: 12px; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; margin-top: 12px; display: inline-block; color: #475569;}
-        
-        .count-badge { background: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-    </style>
+body{height:100vh;display:flex;flex-direction:column}
+.board{display:flex;gap:16px;flex:1;overflow-x:auto;padding-bottom:16px;min-height:0}
+.column{background:#e7eef2;border-radius:var(--radius-lg);width:310px;min-width:310px;display:flex;flex-direction:column;border:1px solid var(--border)}
+.column-header{padding:14px 16px;font-weight:800;font-size:14px;display:flex;justify-content:space-between;align-items:center;border-top:4px solid;border-radius:var(--radius-lg) var(--radius-lg) 0 0}
+.col-draft .column-header{border-color:#8fa1b3;color:#475569}
+.col-submitted .column-header{border-color:#0e9aa7;color:#0b6470}
+.col-approved .column-header{border-color:#16a34a;color:#166534}
+.col-rejected .column-header{border-color:#dc2626;color:#9f1d1d}
+.card-list{padding:4px 12px 12px;flex:1;overflow-y:auto;min-height:200px}
+.k-card{background:#fff;padding:14px 16px;border-radius:var(--radius-md);border:1px solid var(--border);box-shadow:var(--shadow-sm);margin-bottom:10px;cursor:grab;transition:transform .12s,box-shadow .15s}
+.k-card:hover{box-shadow:var(--shadow-md);border-color:var(--border-strong)}
+.k-card:active{cursor:grabbing;transform:scale(.98)}
+.card-uid{font-size:12px;font-weight:800;color:var(--primary);margin-bottom:4px}
+.card-customer{font-size:15px;font-weight:700;margin-bottom:8px}
+.card-details{font-size:13px;color:var(--text-muted);display:flex;justify-content:space-between}
+.card-salesperson{font-size:12px;background:var(--card-bg-alt);border:1px solid var(--border);padding:3px 8px;border-radius:var(--radius-pill);margin-top:12px;display:inline-block;color:#475569;font-weight:600}
+.count-badge{background:#fff;padding:2px 10px;border-radius:var(--radius-pill);font-size:12px;box-shadow:var(--shadow-sm)}
+</style>
 </head>
 <body class="has-sidebar">
 <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation">☰</button>
@@ -58,15 +49,7 @@
 </aside>
 
 
-<div class="master-nav">
-    <div class="brand-container">
-        <img src="Prostarm-logo.png" alt="Prostarm" onerror="this.outerHTML='<div style=\'font-weight:bold; color:#1e4fd6;\'>PR</div>';">
-        <div>
-            <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Drag and drop cards to update pipeline status</div>
-        </div>
-    </div>
-</div>
-
+<header class="page-head"><div><h1>Kanban Board</h1><p>Drag and drop cards to move orders through the pipeline.</p></div></header>
 <div id="syncBanner" class="sync-banner warn">
     <span id="syncIcon">⚠️</span>
     <span id="syncMainText">Showing locally cached data — live sync with Power Automate failed.</span>

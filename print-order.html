@@ -238,8 +238,8 @@
         }
 
         const order = targetOrder["Sales Order"];
-        const products = targetOrder["ProductsTable"] || [];
-        const childItems = targetOrder["DocumentsTable"] || [];
+        const products = targetOrder["Products"] || targetOrder["ProductsTable"] || [];
+        const childItems = targetOrder["SalesChildTable"] || targetOrder["DocumentsTable"] || [];
         const remarks = targetOrder["RemarksTable"] || [];
 
         const map = (id, val, prefix="") => {
@@ -299,7 +299,7 @@
                     <td>${p["Capacity"] || '-'}</td>
                     <td>${p["Model"] || '-'}</td>
                     <td>${p["Make"] || '-'}</td>
-                    <td>${p["Warranty Mos"] || '-'}</td>
+                    <td>${p["Warranty (Months)"] || p["Warranty Mos"] || '-'}</td>
                     <td>${p["Warranty Clause"] || '-'}</td>
                     <td>${p["QTY"] || '-'}</td>
                     <td>${p["Rate"] || '-'}</td>

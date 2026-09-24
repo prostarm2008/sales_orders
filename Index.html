@@ -732,7 +732,7 @@ async function submitForm() {
 						alert(`Warning: ${file.name} uploaded, but Power Automate did not return a valid link. Check your Flow Response step.`);
 					}
 
-					finalAttachment = uploadResult.fileUrl || file.name;
+					attachmentValue = uploadResult.fileUrl || file.name;
                 } catch (uploadErr) {
                     console.error("Upload failed", uploadErr);
                     alert(`File upload failed for ${file.name}. Submission halted.`);
