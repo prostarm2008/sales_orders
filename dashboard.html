@@ -908,7 +908,7 @@
             ordersData = Array.isArray(data) ? data : (data.value || []);
         
             // Sync live data to cache so print-order.html can read it
-            localStorage.setItem('crmOrders', JSON.stringify(ordersData));
+            await idbSet('crmOrders', ordersData);
         
         safeRender('dashboard stats', loadDashboardData);
             safeRender('orders table', renderTable);

@@ -89,7 +89,7 @@
 </div>
 
 <script>
-    window.onload = function() {
+    window.onload = async function() {
         const user = sessionStorage.getItem('loggedInUser');
         const email = sessionStorage.getItem('loggedInEmail');
         
@@ -101,17 +101,17 @@
         document.getElementById('prof-email').value = email || "Not Provided";
         document.getElementById('prof-level').value = getUserLevel();
 
-        const savedCurrency = localStorage.getItem('prefCurrency');
-        const savedDispatch = localStorage.getItem('prefDispatch');
+        const savedCurrency = await idbGet('prefCurrency');
+        const savedDispatch = await idbGet('prefDispatch');
 
         if(savedCurrency) document.getElementById('pref-currency').value = savedCurrency;
         if(savedDispatch) document.getElementById('pref-dispatch').value = savedDispatch;
     };
 
-    function saveSettings() {
+    async function saveSettings() {
         const btn = document.querySelector('.btn-save');
-        localStorage.setItem('prefCurrency', document.getElementById('pref-currency').value);
-        localStorage.setItem('prefDispatch', document.getElementById('pref-dispatch').value);
+        await idbSet('prefCurrency', document.getElementById('pref-currency').value);
+        await idbSet('prefDispatch', document.getElementById('pref-dispatch').value);
 
         btn.innerText = "Saved ✓";
         btn.style.background = "#16a34a"; 

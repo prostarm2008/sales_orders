@@ -313,7 +313,7 @@ if (!sessionStorage.getItem('loggedInUser')) {
 /* ============ DATA SOURCE (same feed as main CRM dashboard) ============ */
 const powerAutomateViewUrl = "https://8549b42c711be8948675eefb5cf215.dd.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/05/workflows/b32de4d56db94337b471df29b82c38e2/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=RnRU6dAnci3wp9PMYaajaskcqd6aL0K9fn7-STxchIw";
 
-let rawOrders = [];   // as returned by the API / localStorage
+let rawOrders = [];   // as returned by the API / IndexedDB
 let rows = [];        // flattened, normalized rows for analytics
 let filteredRows = [];
 let sortKey = 'poDate', sortDir = 'desc';
@@ -766,7 +766,7 @@ async function refreshData(){
   let hadCache = false;
   let cached = [];
   try {
-    cached = JSON.parse(localStorage.getItem('crmOrders')) || [];
+    cached = (await idbGet('crmOrders', []));
   } catch(_) { cached = []; }
 
   if (cached.length) {
@@ -795,7 +795,7 @@ async function refreshData(){
     const data = JSON.parse(body);
     rawOrders = Array.isArray(data) ? data : (data.value || []);
     console.log(`refreshData: fetched ${rawOrders.length} raw record(s) from Power Automate.`, rawOrders[0]);
-    localStorage.setItem('crmOrders', JSON.stringify(rawOrders));
+    await idbSet('crmOrders', rawOrders);
     pill.className = 'sync-pill live';
     text.textContent = `Live · ${rawOrders.length} orders`;
   }catch(e){
@@ -806,7 +806,7 @@ async function refreshData(){
     // open DevTools > Network to see the actual HTTP status / CORS error.
     console.warn(isTimeout ? 'Live sync timed out, using cached data' : 'Live sync failed, using cached data:', e.message || e);
     if (!hadCache) {
-      try{ rawOrders = JSON.parse(localStorage.getItem('crmOrders')) || []; }catch(_){ rawOrders = []; }
+      try{ rawOrders = (await idbGet('crmOrders', [])); }catch(_){ rawOrders = []; }
     }
     pill.className = 'sync-pill cached';
     text.textContent = rawOrders.length ? `Cached · ${rawOrders.length} orders${isTimeout ? ' (sync timed out)' : ''}` : 'No data available';

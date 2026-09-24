@@ -566,10 +566,10 @@
         return prefix + "0001";
     }
 
-    function generateAutoUID() {
+    async function generateAutoUID() {
         const loginId = sessionStorage.getItem('loggedInEmail') || sessionStorage.getItem('loggedInUser') || "chandan.singh";
         const uidInput = document.getElementById('uid');
-        const lastUID = localStorage.getItem('simulatedDBLastUID') || "CS26060014";
+        const lastUID = await idbGet('simulatedDBLastUID', "CS26060014");
         uidInput.value = generateNextUID(lastUID, loginId);
         document.querySelectorAll('.child-parent-uid').forEach(input => { input.value = uidInput.value; });
     }
@@ -758,11 +758,11 @@ async function submitForm() {
         
         // Save locally - bypasses quota limits safely so cloud sync isn't blocked
         try {
-            const existingOrders = JSON.parse(localStorage.getItem('crmOrders')) || [];
+            const existingOrders = (await idbGet('crmOrders', []));
             existingOrders.push(payload);
-            localStorage.setItem('crmOrders', JSON.stringify(existingOrders));
+            await idbSet('crmOrders', existingOrders);
         } catch (localErr) {
-            console.warn("Local storage is full. Proceeding with cloud sync.");
+            console.warn("Local database save failed. Proceeding with cloud sync.");
         }
         
         // Send to Microsoft Power Automate
@@ -774,7 +774,7 @@ async function submitForm() {
             });
 
             if (response.ok) {
-                try { localStorage.setItem('simulatedDBLastUID', currentParentUID); } catch(e){} 
+                await idbSet('simulatedDBLastUID', currentParentUID); 
                 alert("Order Submitted Successfully to Power Automate!\n\nClick OK to draft another new order.");
                 window.location.reload();
             } else {
@@ -795,20 +795,20 @@ async function submitForm() {
         }
     }
 
-    window.onload = function() {
+    window.onload = async function() {
         if (!sessionStorage.getItem('loggedInUser')) { window.location.href = 'login.html'; return; }
         if (!enforcePageAccess()) return;
         applySidebarAccess();
 
         const dataList = document.getElementById('salesPersonList');
         try {
-            const existingOrders = JSON.parse(localStorage.getItem('crmOrders')) || [];
+            const existingOrders = (await idbGet('crmOrders', []));
             const uniqueNames = new Set(); 
             existingOrders.forEach(o => { if (o["Sales Order"] && o["Sales Order"]["Sales Person Name"]) uniqueNames.add(o["Sales Order"]["Sales Person Name"].trim()); });
             uniqueNames.forEach(n => { if(n) dataList.appendChild(new Option(n, n)); });
         } catch(e) {}
 
-        generateAutoUID(); 
+        await generateAutoUID(); 
         generateFY(); 
         toggleBuyback('');
     };

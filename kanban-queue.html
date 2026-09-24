@@ -83,14 +83,15 @@ body{height:100vh;display:flex;flex-direction:column}
     const powerAutomateUpdateUrl = "https://8549b42c711be8948675eefb5cf215.dd.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/23/workflows/939bec4d95ba4d5983187f8b75b034e0/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=B7UyGivjIHH-8dltPNOUXTz0Kj2mbXN-Tdqr2JE_sOo"; 
     const powerAutomateViewUrl = "https://8549b42c711be8948675eefb5cf215.dd.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/05/workflows/b32de4d56db94337b471df29b82c38e2/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=RnRU6dAnci3wp9PMYaajaskcqd6aL0K9fn7-STxchIw";
 
-    function loadCachedOrders() {
-        try { return JSON.parse(localStorage.getItem('crmOrders')) || []; } catch(e) { return []; }
+    async function loadCachedOrders() {
+        const cached = await idbGet('crmOrders', []);
+        return Array.isArray(cached) ? cached : [];
     }
 
     async function loadOrders() {
         // 1) Show cached data immediately instead of leaving the board blank
         //    while the Power Automate flow is still spinning up.
-        ordersData = loadCachedOrders();
+        ordersData = await loadCachedOrders();
         const hadCache = ordersData.length > 0;
         if (hadCache) {
             renderBoard();
@@ -122,14 +123,14 @@ body{height:100vh;display:flex;flex-direction:column}
                 throw new Error(`Flow returned non-JSON content: ${bodyText.slice(0, 200)}`);
             }
             ordersData = Array.isArray(data) ? data : (data.value || []);
-            localStorage.setItem('crmOrders', JSON.stringify(ordersData));
+            await idbSet('crmOrders', ordersData);
             hideSyncBanner();
         } catch (err) {
             clearTimeout(timeoutId);
             const isTimeout = err.name === 'AbortError';
             console.warn(isTimeout ? "Cloud fetch timed out, keeping cached data" : "Cloud fetch failed, falling back to local cache", err);
             showSyncBanner(isTimeout ? new Error('TIMEOUT') : err);
-            if (!hadCache) ordersData = loadCachedOrders();
+            if (!hadCache) ordersData = await loadCachedOrders();
         }
     }
 
@@ -216,7 +217,7 @@ body{height:100vh;display:flex;flex-direction:column}
         
         if(index !== "") {
             ordersData[index]["Sales Order"]["Status"] = newStatus;
-            localStorage.setItem('crmOrders', JSON.stringify(ordersData));
+            idbSet('crmOrders', ordersData);
             renderBoard();
 
             if(powerAutomateUpdateUrl) {

@@ -216,7 +216,7 @@
 </div>
 
 <script>
-    window.onload = function() {
+    window.onload = async function() {
         if (!sessionStorage.getItem('loggedInUser')) { window.location.href = 'login.html'; return; }
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -228,7 +228,7 @@
             return;
         }
 
-        const ordersData = JSON.parse(localStorage.getItem('crmOrders')) || [];
+        const ordersData = (await idbGet('crmOrders', []));
         const targetOrder = ordersData[index];
 
         if (!targetOrder) {

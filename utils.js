@@ -105,3 +105,66 @@ document.addEventListener('keydown', (e) => {
         document.querySelector('.sidebar-backdrop')?.classList.remove('show');
     }
 });
+
+/* =========================================
+   IndexedDB key-value store (replaces localStorage)
+   Database "prostarmCRM" / object store "kv". Values are stored as-is
+   (structured clone), so no JSON.stringify / JSON.parse is needed.
+   ========================================= */
+let _crmDbPromise = null;
+function openCrmDb() {
+    if (_crmDbPromise) return _crmDbPromise;
+    _crmDbPromise = new Promise((resolve, reject) => {
+        if (!window.indexedDB) { reject(new Error('IndexedDB not supported')); return; }
+        const req = indexedDB.open('prostarmCRM', 1);
+        req.onupgradeneeded = () => req.result.createObjectStore('kv');
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+    });
+    _crmDbPromise.catch(() => { _crmDbPromise = null; });
+    return _crmDbPromise;
+}
+
+// Read a value; returns `fallback` if the key is missing or IndexedDB fails.
+async function idbGet(key, fallback = null) {
+    try {
+        const db = await openCrmDb();
+        return await new Promise((resolve, reject) => {
+            const req = db.transaction('kv', 'readonly').objectStore('kv').get(key);
+            req.onsuccess = () => resolve(req.result === undefined ? fallback : req.result);
+            req.onerror = () => reject(req.error);
+        });
+    } catch (e) {
+        console.warn('idbGet failed for', key, e);
+        return fallback;
+    }
+}
+
+// Write a value; resolves true on success, false on failure (never throws).
+async function idbSet(key, value) {
+    try {
+        const db = await openCrmDb();
+        return await new Promise((resolve, reject) => {
+            const tx = db.transaction('kv', 'readwrite');
+            tx.objectStore('kv').put(value, key);
+            tx.oncomplete = () => resolve(true);
+            tx.onerror = () => reject(tx.error);
+            tx.onabort = () => reject(tx.error);
+        });
+    } catch (e) {
+        console.warn('idbSet failed for', key, e);
+        return false;
+    }
+}
+
+async function idbDelete(key) {
+    try {
+        const db = await openCrmDb();
+        return await new Promise((resolve, reject) => {
+            const tx = db.transaction('kv', 'readwrite');
+            tx.objectStore('kv').delete(key);
+            tx.oncomplete = () => resolve(true);
+            tx.onerror = () => reject(tx.error);
+        });
+    } catch (e) { return false; }
+}
